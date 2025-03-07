@@ -3,11 +3,8 @@ import { Link } from 'react-router-dom';
 import { Filter, Search, ChevronDown, Star } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 
-// Get API URL from environment variable or use the deployed backend URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://e-commerce-checkout-api-production.up.railway.app/api';
-
-// Make sure the API URL doesn't end with a slash
-const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+// Hardcode the complete API endpoint for now to ensure it's correct
+const API_ENDPOINT = 'https://e-commerce-checkout-api-production.up.railway.app/api/products';
 
 // Debug log function
 const logDebug = (message: string, data?: any) => {
@@ -53,11 +50,10 @@ const Products: React.FC = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const productsUrl = `${baseUrl}/products`;
-        logDebug('Fetching products from:', productsUrl);
+        logDebug('Fetching products from:', API_ENDPOINT);
         
-        // Use the constructed URL
-        const response = await fetch(productsUrl);
+        // Use the hardcoded endpoint
+        const response = await fetch(API_ENDPOINT);
         
         logDebug('Response status:', response.status);
         

@@ -4,11 +4,8 @@ import { Heart, ShoppingCart, ArrowLeft, Star, CheckCircle, Truck } from 'lucide
 import { useCart } from '../contexts/CartContext';
 import { formatCurrency } from '../utils/formatters';
 
-// Get API URL from environment variable or use the deployed backend URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://e-commerce-checkout-api-production.up.railway.app/api';
-
-// Make sure the API URL doesn't end with a slash
-const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+// API base URL with explicit /api/ path
+const API_BASE_URL = 'https://e-commerce-checkout-api-production.up.railway.app/api';
 
 interface Product {
   _id: string;
@@ -36,10 +33,9 @@ const ProductDetails: React.FC = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const productUrl = `${baseUrl}/products/${productId}`;
+        const productUrl = `${API_BASE_URL}/products/${productId}`;
         console.log(`[Debug] Fetching product from: ${productUrl}`);
         
-        // Use the constructed URL
         const response = await fetch(productUrl);
         
         if (!response.ok) {
