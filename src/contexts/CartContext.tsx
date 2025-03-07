@@ -64,7 +64,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const totals = calculateCartTotals(cartData.items);
         
         setCart({
-          items: cartData.items,
+          items: cartData.items.map((item: { id?: string; _id?: string; productId?: string }) => ({
+            ...item,
+            id: item.id || item._id || `item-${Date.now()}`, // Ensure we always have an id
+            productId: item.productId || '' // Ensure we always have a productId (even if empty)
+          })),
           ...totals
         });
         setError(null);
@@ -97,9 +101,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const totals = calculateCartTotals(cartData.items);
       
       setCart({
-        items: cartData.items.map((item: { id?: string; _id?: string }) => ({
+        items: cartData.items.map((item: { id?: string; _id?: string; productId?: string }) => ({
           ...item,
-          id: item.id || item._id // Ensure we always have an id
+          id: item.id || item._id || `item-${Date.now()}`, // Ensure we always have an id
+          productId: item.productId || '' // Ensure we always have a productId (even if empty)
         })),
         ...totals
       });
@@ -122,9 +127,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const totals = calculateCartTotals(cartData.items);
       
       setCart({
-        items: cartData.items.map((item: { id?: string; _id?: string }) => ({
+        items: cartData.items.map((item: { id?: string; _id?: string; productId?: string }) => ({
           ...item,
-          id: item.id || item._id // Ensure we always have an id
+          id: item.id || item._id || `item-${Date.now()}`, // Ensure we always have an id
+          productId: item.productId || '' // Ensure we always have a productId (even if empty)
         })),
         ...totals
       });
@@ -147,7 +153,11 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const totals = calculateCartTotals(cartData.items);
       
       setCart({
-        items: cartData.items,
+        items: cartData.items.map((item: { id?: string; _id?: string; productId?: string }) => ({
+          ...item,
+          id: item.id || item._id || `item-${Date.now()}`, // Ensure we always have an id
+          productId: item.productId || '' // Ensure we always have a productId (even if empty)
+        })),
         ...totals
       });
       setError(null);

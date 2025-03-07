@@ -102,7 +102,9 @@ const Cart: React.FC = () => {
                             {item.name}
                           </div>
                           <div className="text-sm text-gray-500">
-                            SKU: {item.productId.substring(0, 8)}
+                            {item.productId && typeof item.productId === 'string' 
+                              ? `SKU: ${item.productId.substring(0, 8)}`
+                              : 'SKU: N/A'}
                           </div>
                         </div>
                       </div>
