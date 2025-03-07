@@ -65,7 +65,11 @@ const PaymentForm: React.FC = () => {
     };
   }, [fetchPaymentMethods, selectPaymentMethod, state.paymentMethods, state.selectedPaymentMethod]);
 
+  // Check if a payment method is selected
+  const isPaymentMethodSelected = Boolean(state.selectedPaymentMethod);
+
   const handlePaymentMethodChange = (method: PaymentMethod) => {
+    console.log('Payment method selected:', method);  // Debug log
     selectPaymentMethod(method);
     // Clear previous errors
     setFormErrors({});
@@ -73,11 +77,12 @@ const PaymentForm: React.FC = () => {
 
   const handleCardDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    console.log(`Updating ${name} with value: ${value}`); // Debug log
     
     // Format card number with spaces
     if (name === 'cardNumber') {
-      const formattedValue = value
-        .replace(/\s/g, '')
+      const cleaned = value.replace(/\D/g, '');
+      const formattedValue = cleaned
         .replace(/(.{4})/g, '$1 ')
         .trim()
         .slice(0, 19); // limit to 16 digits + 3 spaces
@@ -89,11 +94,11 @@ const PaymentForm: React.FC = () => {
     } 
     // Format expiry date
     else if (name === 'expiryDate') {
-      const cleanValue = value.replace(/\D/g, '');
-      let formattedValue = cleanValue;
+      const cleaned = value.replace(/\D/g, '');
+      let formattedValue = cleaned;
       
-      if (cleanValue.length > 2) {
-        formattedValue = `${cleanValue.slice(0, 2)}/${cleanValue.slice(2, 4)}`;
+      if (cleaned.length > 2) {
+        formattedValue = `${cleaned.slice(0, 2)}/${cleaned.slice(2, 4)}`;
       }
       
       setCardDetails(prev => ({
@@ -101,7 +106,15 @@ const PaymentForm: React.FC = () => {
         [name]: formattedValue
       }));
     }
-    // Regular input for other fields
+    // CVV should only be numbers
+    else if (name === 'cvv') {
+      const cleaned = value.replace(/\D/g, '').slice(0, 4);
+      setCardDetails(prev => ({
+        ...prev,
+        [name]: cleaned
+      }));
+    }
+    // Other fields
     else {
       setCardDetails(prev => ({
         ...prev,
@@ -109,43 +122,46 @@ const PaymentForm: React.FC = () => {
       }));
     }
     
-    // Clear error for this field
+    // Clear error for this field when user types
     if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setFormErrors(prev => {
+        const newErrors = {...prev};
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     
-    // Validate selected payment method
+    // Check if payment method is selected
     if (!state.selectedPaymentMethod) {
       errors.paymentMethod = 'Please select a payment method';
-      setFormErrors(errors);
-      return false;
     }
     
-    // If credit card payment method is selected, validate card details
-    if (state.selectedPaymentMethod.type === 'credit_card') {
+    // For credit card payments, validate card details
+    if (state.selectedPaymentMethod?.type === 'credit_card') {
+      // Card number validation
       if (!cardDetails.cardNumber.trim()) {
         errors.cardNumber = 'Card number is required';
-      } else if (cardDetails.cardNumber.replace(/\s/g, '').length !== 16) {
-        errors.cardNumber = 'Invalid card number';
+      } else if (!/^\d{4}\s\d{4}\s\d{4}\s\d{4}$/.test(cardDetails.cardNumber)) {
+        errors.cardNumber = 'Invalid card number format';
       }
       
+      // Card holder validation
       if (!cardDetails.cardHolder.trim()) {
         errors.cardHolder = 'Cardholder name is required';
       }
       
+      // Expiry date validation
       if (!cardDetails.expiryDate.trim()) {
-        errors.expiryDate = 'Expiration date is required';
+        errors.expiryDate = 'Expiry date is required';
       } else if (!/^\d{2}\/\d{2}$/.test(cardDetails.expiryDate)) {
-        errors.expiryDate = 'Invalid expiration date (MM/YY)';
+        errors.expiryDate = 'Invalid expiry date format';
       }
       
+      // CVV validation
       if (!cardDetails.cvv.trim()) {
         errors.cvv = 'CVV is required';
       } else if (!/^\d{3,4}$/.test(cardDetails.cvv)) {
@@ -165,6 +181,11 @@ const PaymentForm: React.FC = () => {
     e.preventDefault();
     
     if (!validateForm()) {
+      // Scroll to the first error
+      const firstError = document.querySelector('.text-red-600');
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
     
@@ -182,8 +203,8 @@ const PaymentForm: React.FC = () => {
         </div>
       )}
       
-      <form onSubmit={handleSubmit}>
-        {/* Payment Methods */}
+      <form onSubmit={handleSubmit} noValidate>
+        {/* Payment Methods - Make the entire div more obviously clickable */}
         <div className="mb-8">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Select Payment Method</h3>
           
@@ -196,12 +217,21 @@ const PaymentForm: React.FC = () => {
               {state.paymentMethods.map((method) => (
                 <div
                   key={method._id}
-                  className={`border rounded-md p-4 cursor-pointer transition-colors ${
+                  className={`border rounded-md p-4 cursor-pointer hover:shadow-md transition-all ${
                     state.selectedPaymentMethod?._id === method._id
-                      ? 'border-blue-500 bg-blue-50'
+                      ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300'
                       : 'border-gray-300 hover:border-blue-400'
                   }`}
                   onClick={() => handlePaymentMethodChange(method)}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={state.selectedPaymentMethod?._id === method._id}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handlePaymentMethodChange(method);
+                    }
+                  }}
                 >
                   <div className="flex items-center">
                     <input
@@ -211,8 +241,9 @@ const PaymentForm: React.FC = () => {
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                       checked={state.selectedPaymentMethod?._id === method._id}
                       onChange={() => handlePaymentMethodChange(method)}
+                      onClick={(e) => e.stopPropagation()}
                     />
-                    <label htmlFor={method._id} className="ml-3 flex items-center cursor-pointer">
+                    <label htmlFor={method._id} className="ml-3 flex items-center cursor-pointer flex-1">
                       {method.type === 'credit_card' ? (
                         <CreditCard className="h-5 w-5 text-gray-400 mr-2" />
                       ) : (
@@ -328,12 +359,12 @@ const PaymentForm: React.FC = () => {
           </div>
         )}
         
-        {/* Buttons */}
-        <div className="mt-8 flex justify-between">
-          <button
-            type="button"
+        {/* Enhance the navigation buttons */}
+        <div className="flex flex-col sm:flex-row sm:justify-between pt-6 border-t">
+          <button 
+            type="button" 
             onClick={handleBack}
-            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="mb-4 sm:mb-0 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Back to Shipping
           </button>
@@ -341,9 +372,9 @@ const PaymentForm: React.FC = () => {
           <button
             type="submit"
             disabled={localLoading}
-            className="bg-blue-600 border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            Review Order
+            Continue to Review
           </button>
         </div>
       </form>
