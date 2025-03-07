@@ -3,8 +3,7 @@ import { endpoints } from '../services/api';
 
 // Define types
 export interface CartItem {
-  id?: string;
-  _id: string;
+  id: string;
   productId: string;
   name: string;
   price: number;
@@ -98,7 +97,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const totals = calculateCartTotals(cartData.items);
       
       setCart({
-        items: cartData.items,
+        items: cartData.items.map((item: { id?: string; _id?: string }) => ({
+          ...item,
+          id: item.id || item._id // Ensure we always have an id
+        })),
         ...totals
       });
       setError(null);
@@ -120,7 +122,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const totals = calculateCartTotals(cartData.items);
       
       setCart({
-        items: cartData.items,
+        items: cartData.items.map((item: { id?: string; _id?: string }) => ({
+          ...item,
+          id: item.id || item._id // Ensure we always have an id
+        })),
         ...totals
       });
       setError(null);

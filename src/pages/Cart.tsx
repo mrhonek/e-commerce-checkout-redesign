@@ -81,18 +81,28 @@ const Cart: React.FC = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {cart.items.map((item) => (
-                  <tr key={item.id || item._id}>
+                  <tr key={item.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        {item.image && (
-                          <div className="flex-shrink-0 h-16 w-16 mr-4">
-                            <img className="h-16 w-16 object-cover rounded" src={item.image} alt={item.name} />
+                        <div className="flex-shrink-0 h-16 w-16">
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="h-16 w-16 rounded-md object-cover"
+                            />
+                          ) : (
+                            <div className="h-16 w-16 rounded-md bg-gray-200 flex items-center justify-center">
+                              <span className="text-gray-500 text-sm">No image</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {item.name}
                           </div>
-                        )}
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{item.name}</div>
                           <div className="text-sm text-gray-500">
-                            {item.productId ? `SKU: ${item.productId.substring(0, 8)}` : ''}
+                            SKU: {item.productId.substring(0, 8)}
                           </div>
                         </div>
                       </div>
@@ -103,7 +113,7 @@ const Cart: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <button
-                          onClick={() => handleQuantityChange(item.id || item._id, item.quantity - 1)}
+                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
                           className="p-1 rounded-full hover:bg-gray-100"
                           aria-label="Decrease quantity"
                         >
@@ -111,7 +121,7 @@ const Cart: React.FC = () => {
                         </button>
                         <span className="mx-2 w-8 text-center">{item.quantity}</span>
                         <button
-                          onClick={() => handleQuantityChange(item.id || item._id, item.quantity + 1)}
+                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
                           className="p-1 rounded-full hover:bg-gray-100"
                           aria-label="Increase quantity"
                         >
@@ -126,7 +136,7 @@ const Cart: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
-                        onClick={() => handleRemoveItem(item.id || item._id)}
+                        onClick={() => handleRemoveItem(item.id)}
                         className="text-red-600 hover:text-red-900"
                         aria-label="Remove item"
                       >
