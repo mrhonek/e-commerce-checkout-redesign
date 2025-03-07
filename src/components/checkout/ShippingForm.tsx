@@ -33,31 +33,36 @@ const ShippingForm: React.FC = () => {
       setFormData(state.shippingAddress);
     }
     
-    // Fetch shipping options when component mounts
-    fetchShippingOptions().catch(err => {
-      console.error('Failed to fetch shipping options:', err);
-      // Continue with default shipping options if API fails
-      if (state.shippingOptions.length === 0) {
-        const defaultOptions = [
-          {
-            _id: 'standard',
-            name: 'Standard Shipping',
-            description: 'Delivery within 5-7 business days',
-            price: 5.99,
-            estimatedDelivery: '5-7 business days'
-          },
-          {
-            _id: 'express',
-            name: 'Express Shipping',
-            description: 'Delivery within 2-3 business days',
-            price: 12.99,
-            estimatedDelivery: '2-3 business days'
+    // Only fetch shipping options once when component mounts and only if needed
+    let isMounted = true;
+    
+    const getOptions = async () => {
+      try {
+        // Only fetch if no options exist yet
+        if (state.shippingOptions.length === 0) {
+          const options = await fetchShippingOptions();
+          
+          // If component is still mounted and we have options, select the first one
+          if (isMounted && options.length > 0 && !state.selectedShippingOption) {
+            selectShippingOption(options[0]);
           }
-        ];
-        selectShippingOption(defaultOptions[0]);
+        } else if (!state.selectedShippingOption && state.shippingOptions.length > 0) {
+          // If we already have options but none selected, select the first one
+          selectShippingOption(state.shippingOptions[0]);
+        }
+      } catch (err) {
+        console.error('Error in shipping options flow:', err);
+        // No need to handle here as fetchShippingOptions already has default fallbacks
       }
-    });
-  }, [state.shippingAddress, fetchShippingOptions, selectShippingOption, state.shippingOptions.length]);
+    };
+    
+    getOptions();
+    
+    // Cleanup function to prevent state updates if component unmounts
+    return () => {
+      isMounted = false;
+    };
+  }, [state.shippingAddress, state.shippingOptions, state.selectedShippingOption, fetchShippingOptions, selectShippingOption]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

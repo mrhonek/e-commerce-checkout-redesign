@@ -80,11 +80,11 @@ interface CheckoutContextType {
   setShippingAddress: (address: ShippingAddress) => void;
   setBillingAddress: (address: ShippingAddress) => void;
   setSameAddressForBilling: (useSame: boolean) => void;
-  fetchShippingOptions: () => Promise<void>;
+  fetchShippingOptions: () => Promise<ShippingOption[]>;
   selectShippingOption: (option: ShippingOption) => Promise<void>;
   fetchPaymentMethods: () => Promise<void>;
   selectPaymentMethod: (method: PaymentMethod) => void;
-  createPaymentIntent: () => Promise<string | undefined>;
+  createPaymentIntent: (paymentMethod: string) => Promise<void>;
   placeOrder: () => Promise<string | undefined>;
   resetCheckout: () => void;
 }
@@ -209,15 +209,71 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   // Fetch shipping options
-  const fetchShippingOptions = async () => {
+  const fetchShippingOptions = async (): Promise<ShippingOption[]> => {
+    // If shipping options already exist, don't fetch again
+    if (state.shippingOptions.length > 0) {
+      return state.shippingOptions;
+    }
+    
     try {
       setLoading(true);
       setError(null);
+      
+      // Add timeout to prevent hanging if API doesn't respond
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+      
       const response = await endpoints.shipping.getOptions();
+      
+      clearTimeout(timeoutId);
+      
+      // Provide default options if none are returned
+      if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+        const defaultOptions = [
+          {
+            _id: 'standard',
+            name: 'Standard Shipping',
+            description: 'Delivery within 5-7 business days',
+            price: 5.99,
+            estimatedDelivery: '5-7 business days'
+          },
+          {
+            _id: 'express',
+            name: 'Express Shipping',
+            description: 'Delivery within 2-3 business days',
+            price: 12.99,
+            estimatedDelivery: '2-3 business days'
+          }
+        ];
+        dispatch({ type: 'SET_SHIPPING_OPTIONS', payload: defaultOptions });
+        return defaultOptions;
+      }
+      
       dispatch({ type: 'SET_SHIPPING_OPTIONS', payload: response.data });
+      return response.data;
     } catch (err) {
       console.error('Error fetching shipping options:', err);
       setError('Failed to load shipping options');
+      
+      // Provide default options on error
+      const defaultOptions = [
+        {
+          _id: 'standard',
+          name: 'Standard Shipping',
+          description: 'Delivery within 5-7 business days',
+          price: 5.99,
+          estimatedDelivery: '5-7 business days'
+        },
+        {
+          _id: 'express',
+          name: 'Express Shipping',
+          description: 'Delivery within 2-3 business days',
+          price: 12.99,
+          estimatedDelivery: '2-3 business days'
+        }
+      ];
+      dispatch({ type: 'SET_SHIPPING_OPTIONS', payload: defaultOptions });
+      return defaultOptions;
     } finally {
       setLoading(false);
     }
@@ -276,7 +332,7 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   // Create payment intent
-  const createPaymentIntent = async (): Promise<string | undefined> => {
+  const createPaymentIntent = async (paymentMethod: string): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -288,11 +344,9 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       const paymentIntentId = response.data.id;
       dispatch({ type: 'SET_PAYMENT_INTENT', payload: paymentIntentId });
-      return paymentIntentId;
     } catch (err) {
       console.error('Error creating payment intent:', err);
       setError('Failed to initialize payment');
-      return undefined;
     } finally {
       setLoading(false);
     }

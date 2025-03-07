@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCheckout } from '../contexts/CheckoutContext';
 import { useCart } from '../contexts/CartContext';
@@ -17,6 +17,24 @@ const Checkout: React.FC = () => {
   const { state, loading, error, setStep } = useCheckout();
   const { cart } = useCart();
   const navigate = useNavigate();
+  const [timeoutOccurred, setTimeoutOccurred] = useState(false);
+
+  // Add a loading timeout to ensure we don't hang indefinitely
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (loading) {
+      timeoutId = setTimeout(() => {
+        setTimeoutOccurred(true);
+      }, 8000); // 8 second timeout
+    } else {
+      setTimeoutOccurred(false);
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [loading]);
 
   // Redirect to cart if cart is empty
   useEffect(() => {
@@ -47,10 +65,41 @@ const Checkout: React.FC = () => {
   }, [state.step, state.orderId, navigate]);
 
   // Show loading state
-  if (loading) {
+  if (loading && !timeoutOccurred) {
     return (
       <div className="container mx-auto px-4 py-8 flex justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+  
+  // If loading takes too long, show a helpful message
+  if (timeoutOccurred) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <h2 className="text-xl font-semibold mb-4">Taking longer than expected...</h2>
+          <p className="mb-4">We're having trouble loading the checkout page. You can:</p>
+          <ul className="list-disc list-inside mb-6 text-left inline-block">
+            <li className="mb-2">Refresh the page and try again</li>
+            <li className="mb-2">Check your internet connection</li>
+            <li className="mb-2">Continue shopping and try again later</li>
+          </ul>
+          <div className="flex justify-center space-x-4">
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Refresh Page
+            </button>
+            <button 
+              onClick={() => navigate('/')} 
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+            >
+              Return to Shop
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
