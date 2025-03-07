@@ -68,6 +68,30 @@ const PaymentForm: React.FC = () => {
   // Check if a payment method is selected
   const isPaymentMethodSelected = Boolean(state.selectedPaymentMethod);
 
+  // Add debug logging for payment method
+  console.log('Selected payment method:', state.selectedPaymentMethod);
+  console.log('Payment methods:', state.paymentMethods);
+
+  // Check if payment method type is available and fix it if needed
+  const paymentMethodType = state.selectedPaymentMethod?.type;
+  console.log('Payment method type:', paymentMethodType);
+  
+  // Fix the card details display condition
+  const showCardDetails = state.selectedPaymentMethod && 
+    (state.selectedPaymentMethod.type === 'credit_card' || 
+     state.selectedPaymentMethod._id === 'credit_card');
+
+  // Handle credit card selection specifically
+  const selectCreditCard = () => {
+    const creditCardMethod = state.paymentMethods.find(m => 
+      m.type === 'credit_card' || m._id === 'credit_card'
+    );
+    if (creditCardMethod) {
+      console.log('Selecting credit card method:', creditCardMethod);
+      selectPaymentMethod(creditCardMethod);
+    }
+  };
+
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     console.log('Payment method selected:', method);  // Debug log
     selectPaymentMethod(method);
@@ -255,8 +279,33 @@ const PaymentForm: React.FC = () => {
                   {method.description && (
                     <p className="mt-2 text-sm text-gray-500 ml-7">{method.description}</p>
                   )}
+                  {/* Debug and helper button */}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      ID: {method._id}, Type: {method.type}
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePaymentMethodChange(method);
+                        }}
+                        className="ml-2 bg-gray-200 px-2 py-1 rounded text-xs"
+                      >
+                        Force select
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
+              
+              {/* Emergency credit card selection button */}
+              <button 
+                type="button" 
+                onClick={selectCreditCard}
+                className="mt-4 bg-blue-100 text-blue-700 px-4 py-2 rounded text-sm font-medium hover:bg-blue-200"
+              >
+                Select Credit Card Payment
+              </button>
               
               {formErrors.paymentMethod && (
                 <p className="text-sm text-red-600 mt-1">{formErrors.paymentMethod}</p>
@@ -265,8 +314,17 @@ const PaymentForm: React.FC = () => {
           )}
         </div>
         
+        {/* Debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="bg-gray-100 p-2 text-xs rounded mb-4">
+            <div><strong>Selected method:</strong> {state.selectedPaymentMethod?._id}</div>
+            <div><strong>Type:</strong> {state.selectedPaymentMethod?.type}</div>
+            <div><strong>Show card details:</strong> {showCardDetails ? 'Yes' : 'No'}</div>
+          </div>
+        )}
+        
         {/* Credit Card Details (shown only if credit card method is selected) */}
-        {state.selectedPaymentMethod?.type === 'credit_card' && (
+        {showCardDetails && (
           <div className="mb-8 border-t pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Card Details</h3>
             

@@ -335,13 +335,13 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
         const defaultPaymentMethods: PaymentMethod[] = [
           {
             _id: 'credit_card',
-            type: 'credit_card',
+            type: 'credit_card' as 'credit_card',
             name: 'Credit / Debit Card',
             description: 'Pay securely with your card'
           },
           {
             _id: 'paypal',
-            type: 'paypal',
+            type: 'paypal' as 'paypal',
             name: 'PayPal',
             description: 'Fast and secure checkout with PayPal'
           }
@@ -350,8 +350,14 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
         return defaultPaymentMethods;
       }
       
-      dispatch({ type: 'SET_PAYMENT_METHODS', payload: response.data });
-      return response.data;
+      // Make sure returned data has correct types
+      const validatedPaymentMethods: PaymentMethod[] = response.data.map(method => ({
+        ...method,
+        type: method.type === 'credit_card' ? 'credit_card' : 'paypal'
+      }));
+      
+      dispatch({ type: 'SET_PAYMENT_METHODS', payload: validatedPaymentMethods });
+      return validatedPaymentMethods;
     } catch (err) {
       console.error('Error fetching payment methods:', err);
       setError('Failed to load payment methods');
@@ -360,13 +366,13 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
       const defaultPaymentMethods: PaymentMethod[] = [
         {
           _id: 'credit_card',
-          type: 'credit_card',
+          type: 'credit_card' as 'credit_card',
           name: 'Credit / Debit Card',
           description: 'Pay securely with your card'
         },
         {
           _id: 'paypal',
-          type: 'paypal',
+          type: 'paypal' as 'paypal',
           name: 'PayPal',
           description: 'Fast and secure checkout with PayPal'
         }
