@@ -104,9 +104,9 @@ const endpoints = {
   cart: {
     get: () => api.get('/api/cart'),
     add: (data: { productId: string; name: string; price: number; quantity: number; image?: string }) => 
-      api.post('/api/cart', data),
+      api.post('/api/cart/items', data),
     update: (itemId: string, data: { quantity: number }) => api.put(`/api/cart/items/${itemId}`, data),
-    remove: (itemId: string) => api.delete(`/api/cart/${itemId}`),
+    remove: (itemId: string) => api.delete(`/api/cart/items/${itemId}`),
     clear: () => api.delete('/api/cart'),
   },
   
