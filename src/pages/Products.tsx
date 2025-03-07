@@ -6,6 +6,11 @@ import { formatCurrency } from '../utils/formatters';
 // Get API URL from environment variable or use the deployed backend URL
 const API_URL = import.meta.env.VITE_API_URL || 'https://e-commerce-checkout-api-production.up.railway.app/api';
 
+// Debug log function
+const logDebug = (message: string, data?: any) => {
+  console.log(`[Debug] ${message}`, data || '');
+};
+
 interface Product {
   _id: string;
   name: string;
@@ -45,16 +50,30 @@ const Products: React.FC = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
+        logDebug('Fetching products from:', API_URL);
+        
         // Use the API_URL from environment variable
         const response = await fetch(`${API_URL}/products`);
         
+        logDebug('Response status:', response.status);
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch products');
+          throw new Error(`Failed to fetch products: ${response.status} ${response.statusText}`);
         }
         
-        const data = await response.json();
-        setProducts(data);
+        const text = await response.text();
+        logDebug('Response text:', text.substring(0, 100) + '...');
+        
+        try {
+          const data = JSON.parse(text);
+          logDebug('Parsed data:', { count: data.length });
+          setProducts(data);
+        } catch (jsonError: unknown) {
+          const errorMessage = jsonError instanceof Error ? jsonError.message : 'Unknown JSON parsing error';
+          throw new Error(`Failed to parse JSON: ${errorMessage}`);
+        }
       } catch (err) {
+        console.error('Error fetching products:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch products');
       } finally {
         setLoading(false);
