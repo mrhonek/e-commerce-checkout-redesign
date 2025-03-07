@@ -113,6 +113,27 @@ const PaymentForm: React.FC = () => {
   // Use this for conditional rendering
   const shouldShowCardForm = showCardDetails || forceShowCardForm;
 
+  // Debug logging
+  console.log('shouldShowCardForm:', shouldShowCardForm); 
+  console.log('showCardDetails:', showCardDetails);
+  console.log('forceShowCardForm:', forceShowCardForm);
+
+  useEffect(() => {
+    // If we have a selected payment method that's a credit card, force show the form
+    if (state.selectedPaymentMethod) {
+      const isCardMethod = 
+        state.selectedPaymentMethod.type === 'credit_card' || 
+        state.selectedPaymentMethod._id === 'credit_card' ||
+        (state.selectedPaymentMethod.name && 
+         state.selectedPaymentMethod.name.toLowerCase().includes('card'));
+      
+      if (isCardMethod) {
+        console.log('Setting force show card from selected method effect');
+        setForceShowCardForm(true);
+      }
+    }
+  }, [state.selectedPaymentMethod]);
+
   // Handle credit card selection specifically with a more robust approach
   const selectCreditCard = () => {
     // Force show card form regardless of payment method type
@@ -168,14 +189,25 @@ const PaymentForm: React.FC = () => {
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     console.log('Payment method selected:', method);  // Debug log
-    selectPaymentMethod(method);
     
-    // Automatically show card form if credit card is selected
-    if (method.type === 'credit_card' || method._id === 'credit_card' || 
-        method.name?.toLowerCase().includes('card')) {
+    // Check if this is a credit card method and show form if it is
+    const isCreditCard = method.type === 'credit_card' || 
+                        method._id === 'credit_card' || 
+                        method.name?.toLowerCase().includes('card');
+    
+    if (isCreditCard) {
+      console.log('Credit card method detected, showing form');
       setForceShowCardForm(true);
+      
+      // Make sure it has the correct type
+      const fixedMethod = {
+        ...method,
+        type: 'credit_card' as 'credit_card'
+      };
+      selectPaymentMethod(fixedMethod);
     } else {
       setForceShowCardForm(false);
+      selectPaymentMethod(method);
     }
     
     // Clear previous errors
@@ -371,62 +403,38 @@ const PaymentForm: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {state.paymentMethods.map((method) => (
-                <div
-                  key={method._id}
-                  className={`border rounded-md p-4 cursor-pointer hover:shadow-md transition-all ${
-                    state.selectedPaymentMethod?._id === method._id
-                      ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-300'
-                      : 'border-gray-300 hover:border-blue-400'
-                  }`}
+                <div 
+                  key={method._id} 
+                  className={`flex items-center p-4 border rounded cursor-pointer transition-colors
+                    ${state.selectedPaymentMethod?._id === method._id 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:bg-gray-50'}`}
                   onClick={() => handlePaymentMethodChange(method)}
-                  role="button"
-                  tabIndex={0}
-                  aria-pressed={state.selectedPaymentMethod?._id === method._id}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handlePaymentMethodChange(method);
-                    }
-                  }}
                 >
-                  <div className="flex items-center">
-                    <input
-                      id={method._id}
-                      type="radio"
-                      name="paymentMethod"
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                      checked={state.selectedPaymentMethod?._id === method._id}
-                      onChange={() => handlePaymentMethodChange(method)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <label htmlFor={method._id} className="ml-3 flex items-center cursor-pointer flex-1">
-                      {method.type === 'credit_card' ? (
-                        <CreditCard className="h-5 w-5 text-gray-400 mr-2" />
-                      ) : (
-                        <Check className="h-5 w-5 text-gray-400 mr-2" />
+                  <input
+                    type="radio"
+                    id={`payment-${method._id}`}
+                    name="paymentMethod"
+                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    checked={state.selectedPaymentMethod?._id === method._id}
+                    onChange={() => handlePaymentMethodChange(method)}
+                  />
+                  <label 
+                    htmlFor={`payment-${method._id}`} 
+                    className="ml-3 flex items-center cursor-pointer flex-grow"
+                  >
+                    {method.type === 'credit_card' || method._id === 'credit_card' ? (
+                      <CreditCard className="h-6 w-6 text-blue-500 mr-2" />
+                    ) : (
+                      <Check className="h-6 w-6 text-green-500 mr-2" />
+                    )}
+                    <div>
+                      <div className="font-medium">{method.name}</div>
+                      {method.description && (
+                        <div className="text-sm text-gray-500">{method.description}</div>
                       )}
-                      <span className="font-medium">{method.name}</span>
-                    </label>
-                  </div>
-                  {method.description && (
-                    <p className="mt-2 text-sm text-gray-500 ml-7">{method.description}</p>
-                  )}
-                  {/* Debug and helper button */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="mt-2 text-xs text-gray-500">
-                      ID: {method._id}, Type: {method.type}
-                      <button 
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePaymentMethodChange(method);
-                        }}
-                        className="ml-2 bg-gray-200 px-2 py-1 rounded text-xs"
-                      >
-                        Force select
-                      </button>
                     </div>
-                  )}
+                  </label>
                 </div>
               ))}
               
@@ -455,11 +463,10 @@ const PaymentForm: React.FC = () => {
           </div>
         )}
         
-        {/* Credit Card Details (modified condition) */}
+        {/* Card Details Form - shown when credit card is selected */}
         {shouldShowCardForm && (
-          <div className="mb-8 border-t pt-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Card Details</h3>
-            
+          <div className="mt-6 border border-gray-200 rounded-md p-4 bg-gray-50">
+            <h3 className="text-lg font-medium mb-4">Card Details</h3>
             <div className="space-y-4">
               <div>
                 <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">
@@ -469,13 +476,14 @@ const PaymentForm: React.FC = () => {
                   type="text"
                   id="cardNumber"
                   name="cardNumber"
-                  placeholder="1234 5678 9012 3456"
+                  placeholder="0000 0000 0000 0000"
                   value={cardDetails.cardNumber}
                   onChange={handleCardDetailsChange}
-                  maxLength={19}
-                  className={`mt-1 block w-full border ${
-                    formErrors.cardNumber ? 'border-red-300' : 'border-gray-300'
-                  } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                  className={`mt-1 block w-full rounded-md shadow-sm ${
+                    formErrors.cardNumber
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                  }`}
                 />
                 {formErrors.cardNumber && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.cardNumber}</p>
@@ -493,19 +501,21 @@ const PaymentForm: React.FC = () => {
                   placeholder="John Doe"
                   value={cardDetails.cardHolder}
                   onChange={handleCardDetailsChange}
-                  className={`mt-1 block w-full border ${
-                    formErrors.cardHolder ? 'border-red-300' : 'border-gray-300'
-                  } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                  className={`mt-1 block w-full rounded-md shadow-sm ${
+                    formErrors.cardHolder
+                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                  }`}
                 />
                 {formErrors.cardHolder && (
                   <p className="mt-1 text-sm text-red-600">{formErrors.cardHolder}</p>
                 )}
               </div>
               
-              <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
-                    Expiration Date (MM/YY)
+                    Expiry Date
                   </label>
                   <input
                     type="text"
@@ -514,10 +524,11 @@ const PaymentForm: React.FC = () => {
                     placeholder="MM/YY"
                     value={cardDetails.expiryDate}
                     onChange={handleCardDetailsChange}
-                    maxLength={5}
-                    className={`mt-1 block w-full border ${
-                      formErrors.expiryDate ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                    className={`mt-1 block w-full rounded-md shadow-sm ${
+                      formErrors.expiryDate
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                    }`}
                   />
                   {formErrors.expiryDate && (
                     <p className="mt-1 text-sm text-red-600">{formErrors.expiryDate}</p>
@@ -535,10 +546,11 @@ const PaymentForm: React.FC = () => {
                     placeholder="123"
                     value={cardDetails.cvv}
                     onChange={handleCardDetailsChange}
-                    maxLength={4}
-                    className={`mt-1 block w-full border ${
-                      formErrors.cvv ? 'border-red-300' : 'border-gray-300'
-                    } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500`}
+                    className={`mt-1 block w-full rounded-md shadow-sm ${
+                      formErrors.cvv
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                    }`}
                   />
                   {formErrors.cvv && (
                     <p className="mt-1 text-sm text-red-600">{formErrors.cvv}</p>
@@ -548,6 +560,23 @@ const PaymentForm: React.FC = () => {
             </div>
           </div>
         )}
+        
+        {/* Emergency buttons for development/debug */}
+        <div className="mt-4">
+          {!shouldShowCardForm && (
+            <button
+              type="button"
+              onClick={() => {
+                console.log('Force showing credit card form');
+                setForceShowCardForm(true);
+                selectCreditCard();
+              }}
+              className="text-sm text-blue-600 hover:underline"
+            >
+              Show credit card form
+            </button>
+          )}
+        </div>
         
         {/* Enhance the navigation buttons */}
         <div className="flex flex-col sm:flex-row sm:justify-between pt-6 border-t">
