@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { Filter, Search, ChevronDown, Star } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 
+// Get API URL from environment variable or use the deployed backend URL
+const API_URL = import.meta.env.VITE_API_URL || 'https://e-commerce-checkout-api-production.up.railway.app/api';
+
 interface Product {
   _id: string;
   name: string;
@@ -42,8 +45,8 @@ const Products: React.FC = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        // In a real app, replace with your API endpoint
-        const response = await fetch('/api/products');
+        // Use the API_URL from environment variable
+        const response = await fetch(`${API_URL}/products`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch products');

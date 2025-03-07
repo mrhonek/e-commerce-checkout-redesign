@@ -4,6 +4,9 @@ import { Heart, ShoppingCart, ArrowLeft, Star, CheckCircle, Truck } from 'lucide
 import { useCart } from '../contexts/CartContext';
 import { formatCurrency } from '../utils/formatters';
 
+// Get API URL from environment variable or use the deployed backend URL
+const API_URL = import.meta.env.VITE_API_URL || 'https://e-commerce-checkout-api-production.up.railway.app/api';
+
 interface Product {
   _id: string;
   name: string;
@@ -30,8 +33,8 @@ const ProductDetails: React.FC = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        // In a real app, replace with your API endpoint
-        const response = await fetch(`/api/products/${productId}`);
+        // Use the API_URL from environment variable
+        const response = await fetch(`${API_URL}/products/${productId}`);
         
         if (!response.ok) {
           throw new Error('Product not found');
@@ -77,12 +80,11 @@ const ProductDetails: React.FC = () => {
   const handleAddToCart = () => {
     if (product) {
       addToCart({
-        productId: product._id,
+        _id: product._id,
         name: product.name,
         price: product.price,
-        image: product.image,
-        quantity
-      });
+        image: product.image
+      }, quantity);
       
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 3000);
