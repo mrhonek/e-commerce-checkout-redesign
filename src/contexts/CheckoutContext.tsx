@@ -437,21 +437,64 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
       setLoading(true);
       setError(null);
       
+      // Format shipping address to match expected structure
+      const formattedShippingAddress = {
+        firstName: state.shippingAddress.firstName,
+        lastName: state.shippingAddress.lastName,
+        street: state.shippingAddress.address1,
+        city: state.shippingAddress.city,
+        state: state.shippingAddress.state,
+        zipCode: state.shippingAddress.postalCode,
+        country: state.shippingAddress.country,
+        email: state.shippingAddress.email
+      };
+      
+      // Format shipping method to match expected structure
+      const shippingMethod = state.selectedShippingOption ? {
+        id: state.selectedShippingOption._id,
+        name: state.selectedShippingOption.name,
+        price: state.selectedShippingOption.price,
+        estimatedDays: state.selectedShippingOption.estimatedDelivery
+      } : {
+        id: 'standard',
+        name: 'Standard Shipping',
+        price: 0,
+        estimatedDays: '3-5 business days'
+      };
+      
+      // Format payment method
+      const paymentMethod = state.selectedPaymentMethod ? 
+        state.selectedPaymentMethod.type === 'credit_card' ? 'Credit Card' : 'PayPal' :
+        'Credit Card';
+      
       const orderData = {
-        items: cart.items,
-        shipping: {
-          address: state.shippingAddress,
-          method: state.selectedShippingOption || { name: 'Standard Shipping', price: 0 }
-        },
-        billing: {
-          address: effectiveBillingAddress,
-          paymentIntent: state.paymentIntent || 'mock_payment_intent'
-        },
-        totals: state.orderSummary
+        items: cart.items.map(item => ({
+          id: item.id,
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        })),
+        shippingAddress: formattedShippingAddress,
+        shippingMethod: shippingMethod,
+        paymentMethod: paymentMethod,
+        subtotal: state.orderSummary.subtotal,
+        tax: state.orderSummary.tax,
+        shipping: state.orderSummary.shipping,
+        total: state.orderSummary.total,
+        status: 'processing',
+        createdAt: new Date().toISOString(),
+        email: state.shippingAddress.email
       };
       
       const response = await endpoints.orders.create(orderData);
-      const orderId = response.data._id || response.data.id || 'ORD-' + Date.now();
+      
+      // Ensure we have an order ID
+      const orderId = response.data.order?.orderNumber || 
+                      response.data.order?._id || 
+                      response.data.order?.id || 
+                      'ORD-' + Date.now();
       
       dispatch({ type: 'SET_ORDER_ID', payload: orderId });
       dispatch({ type: 'SET_STEP', payload: 'confirmation' });
