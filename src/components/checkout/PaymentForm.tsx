@@ -110,38 +110,51 @@ const PaymentForm: React.FC = () => {
     // Force show card form regardless of payment method type
     setForceShowCardForm(true);
     
-    // Try all possible combinations to find credit card payment method
-    let creditCardMethod = state.paymentMethods.find(m => m.type === 'credit_card');
-    
-    if (!creditCardMethod) {
-      creditCardMethod = state.paymentMethods.find(m => m._id === 'credit_card');
-    }
-    
-    if (!creditCardMethod) {
-      creditCardMethod = state.paymentMethods.find(m => 
-        m._id.toLowerCase().includes('credit') || 
-        m.name.toLowerCase().includes('credit')
+    try {
+      // Try all possible combinations to find credit card payment method
+      let creditCardMethod = state.paymentMethods.find(m => 
+        m.type === 'credit_card'
       );
-    }
-    
-    // As a last resort, just take the first method and force its type
-    if (!creditCardMethod && state.paymentMethods.length > 0) {
-      creditCardMethod = {
-        ...state.paymentMethods[0],
-        type: 'credit_card' as 'credit_card'
-      };
-    }
-    
-    if (creditCardMethod) {
-      console.log('Selecting credit card method with override:', creditCardMethod);
-      // Create a new object to ensure it has the right type
-      const fixedMethod = {
-        ...creditCardMethod,
-        type: 'credit_card' as 'credit_card'
-      };
-      selectPaymentMethod(fixedMethod);
-    } else {
-      console.error('No payment methods available');
+      
+      if (!creditCardMethod) {
+        creditCardMethod = state.paymentMethods.find(m => 
+          m._id === 'credit_card' || m.id === 'credit_card'
+        );
+      }
+      
+      if (!creditCardMethod) {
+        creditCardMethod = state.paymentMethods.find(m => {
+          // Safe access to properties with optional chaining
+          return (m._id?.toLowerCase()?.includes('card') || 
+                  m.id?.toLowerCase()?.includes('card') || 
+                  m.name?.toLowerCase()?.includes('card') || false);
+        });
+      }
+      
+      // As a last resort, just take the first method and force its type
+      if (!creditCardMethod && state.paymentMethods.length > 0) {
+        creditCardMethod = {
+          ...state.paymentMethods[0],
+          type: 'credit_card' as 'credit_card'
+        };
+      }
+      
+      if (creditCardMethod) {
+        console.log('Selecting credit card method with override:', creditCardMethod);
+        // Create a new object to ensure it has the right type
+        const fixedMethod = {
+          ...creditCardMethod,
+          type: 'credit_card' as 'credit_card',
+          // Ensure it has an ID
+          _id: creditCardMethod._id || creditCardMethod.id || 'credit_card'
+        };
+        selectPaymentMethod(fixedMethod);
+      } else {
+        console.error('No payment methods available');
+      }
+    } catch (err) {
+      console.error('Error selecting credit card method:', err);
+      // Continue with form display even if selection fails
     }
   };
 
@@ -212,13 +225,16 @@ const PaymentForm: React.FC = () => {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     
-    // Check if payment method is selected
-    if (!state.selectedPaymentMethod) {
-      errors.paymentMethod = 'Please select a payment method';
+    // Skip payment method validation if we're in force mode
+    if (!forceShowCardForm) {
+      // Check if payment method is selected
+      if (!state.selectedPaymentMethod) {
+        errors.paymentMethod = 'Please select a payment method';
+      }
     }
     
-    // For credit card payments, validate card details
-    if (state.selectedPaymentMethod?.type === 'credit_card') {
+    // Always validate card details if card form is shown
+    if (shouldShowCardForm) {
       // Card number validation
       if (!cardDetails.cardNumber.trim()) {
         errors.cardNumber = 'Card number is required';
@@ -256,6 +272,34 @@ const PaymentForm: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If we're in force mode but don't have a credit card payment method selected, create one
+    if (forceShowCardForm && (!state.selectedPaymentMethod || state.selectedPaymentMethod.type !== 'credit_card')) {
+      try {
+        // Create a synthetic payment method
+        const syntheticMethod = {
+          _id: 'credit_card',
+          id: 'credit_card',
+          type: 'credit_card' as 'credit_card',
+          name: 'Credit / Debit Card',
+          description: 'Card ending in ' + cardDetails.cardNumber.slice(-4)
+        };
+        
+        console.log('Creating synthetic payment method:', syntheticMethod);
+        selectPaymentMethod(syntheticMethod);
+        
+        // Short delay to allow state to update before continuing
+        setTimeout(() => {
+          if (validateForm()) {
+            setStep('review');
+          }
+        }, 100);
+        
+        return;
+      } catch (err) {
+        console.error('Error creating synthetic payment method:', err);
+      }
+    }
     
     if (!validateForm()) {
       // Scroll to the first error
