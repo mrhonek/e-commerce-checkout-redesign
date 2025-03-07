@@ -81,7 +81,7 @@ const Cart: React.FC = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {cart.items.map((item) => (
-                  <tr key={item._id}>
+                  <tr key={item.id || item._id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {item.image && (
@@ -103,7 +103,7 @@ const Cart: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <button
-                          onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
+                          onClick={() => handleQuantityChange(item.id || item._id, item.quantity - 1)}
                           className="p-1 rounded-full hover:bg-gray-100"
                           aria-label="Decrease quantity"
                         >
@@ -111,7 +111,7 @@ const Cart: React.FC = () => {
                         </button>
                         <span className="mx-2 w-8 text-center">{item.quantity}</span>
                         <button
-                          onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
+                          onClick={() => handleQuantityChange(item.id || item._id, item.quantity + 1)}
                           className="p-1 rounded-full hover:bg-gray-100"
                           aria-label="Increase quantity"
                         >
@@ -126,7 +126,7 @@ const Cart: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
-                        onClick={() => handleRemoveItem(item._id)}
+                        onClick={() => handleRemoveItem(item.id || item._id)}
                         className="text-red-600 hover:text-red-900"
                         aria-label="Remove item"
                       >

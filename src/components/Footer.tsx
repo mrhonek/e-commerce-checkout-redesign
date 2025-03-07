@@ -30,7 +30,7 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {/* About column */}
           <div>
-            <h2 className="text-xl font-bold mb-4">ShopHub</h2>
+            <h2 className="text-xl font-bold mb-4">RhnkShop</h2>
             <p className="text-gray-300 mb-4">
               Your premier destination for quality products with a streamlined shopping experience and 
               exceptional customer service.
@@ -183,7 +183,7 @@ export const Footer: React.FC = () => {
         {/* Bottom copyright section */}
         <div className="flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm mb-4 md:mb-0">
-            &copy; {currentYear} ShopHub. All rights reserved.
+            &copy; {currentYear} RhnkShop. All rights reserved.
           </p>
           <div className="flex items-center">
             <span className="text-gray-400 text-sm mr-2">Built with</span>

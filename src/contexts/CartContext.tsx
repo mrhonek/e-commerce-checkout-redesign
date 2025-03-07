@@ -3,6 +3,7 @@ import { endpoints } from '../services/api';
 
 // Define types
 export interface CartItem {
+  id?: string;
   _id: string;
   productId: string;
   name: string;
