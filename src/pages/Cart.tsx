@@ -91,7 +91,9 @@ const Cart: React.FC = () => {
                         )}
                         <div>
                           <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                          <div className="text-sm text-gray-500">SKU: {item.productId.substring(0, 8)}</div>
+                          <div className="text-sm text-gray-500">
+                            {item.productId ? `SKU: ${item.productId.substring(0, 8)}` : ''}
+                          </div>
                         </div>
                       </div>
                     </td>
