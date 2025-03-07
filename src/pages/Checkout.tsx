@@ -7,6 +7,23 @@ import PaymentForm from '../components/checkout/PaymentForm';
 import OrderReview from '../components/checkout/OrderReview';
 import CheckoutSteps from '../components/checkout/CheckoutSteps';
 
+// Fallback image as base64 for small footprint (a simple gray image)
+const FALLBACK_IMAGE_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAAA8AXHiAAAABmJLR0QA/wD/AP+gvaeTAAAASUlEQVR4nO3BAQ0AAADCoPdPbQ43oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA5gBi9QABT9zRHQAAAABJRU5ErkJggg==';
+
+// Product image component with fallback
+const ProductImage = ({ item }: { item: any }) => {
+  const [error, setError] = React.useState(false);
+  
+  return (
+    <img 
+      src={error ? FALLBACK_IMAGE_BASE64 : item.image || FALLBACK_IMAGE_BASE64}
+      alt={item.name}
+      className="w-12 h-12 object-cover rounded-md"
+      onError={() => setError(true)}
+    />
+  );
+};
+
 const Checkout: React.FC = () => {
   const { state, loading, error, setStep } = useCheckout();
   const { cart } = useCart();
@@ -79,8 +96,11 @@ const Checkout: React.FC = () => {
             <div className="border-b pb-4 mb-4">
               <p className="text-gray-600 mb-2">Items ({cart.totalItems})</p>
               {cart.items.map((item) => (
-                <div key={item._id} className="flex justify-between mb-2">
-                  <span className="text-sm">{item.name} × {item.quantity}</span>
+                <div key={item.id} className="flex justify-between mb-2 items-center">
+                  <div className="flex items-center">
+                    <ProductImage item={item} />
+                    <span className="text-sm ml-2">{item.name} × {item.quantity}</span>
+                  </div>
                   <span className="text-sm font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}

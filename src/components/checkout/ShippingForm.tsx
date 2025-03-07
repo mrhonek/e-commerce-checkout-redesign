@@ -34,8 +34,30 @@ const ShippingForm: React.FC = () => {
     }
     
     // Fetch shipping options when component mounts
-    fetchShippingOptions();
-  }, [state.shippingAddress, fetchShippingOptions]);
+    fetchShippingOptions().catch(err => {
+      console.error('Failed to fetch shipping options:', err);
+      // Continue with default shipping options if API fails
+      if (state.shippingOptions.length === 0) {
+        const defaultOptions = [
+          {
+            _id: 'standard',
+            name: 'Standard Shipping',
+            description: 'Delivery within 5-7 business days',
+            price: 5.99,
+            estimatedDelivery: '5-7 business days'
+          },
+          {
+            _id: 'express',
+            name: 'Express Shipping',
+            description: 'Delivery within 2-3 business days',
+            price: 12.99,
+            estimatedDelivery: '2-3 business days'
+          }
+        ];
+        selectShippingOption(defaultOptions[0]);
+      }
+    });
+  }, [state.shippingAddress, fetchShippingOptions, selectShippingOption, state.shippingOptions.length]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
