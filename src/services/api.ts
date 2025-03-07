@@ -51,7 +51,7 @@ export interface Order {
 }
 
 // API base URL - can be overridden by environment variables
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://e-commerce-checkout-api-production.up.railway.app/api';
 
 // Create an axios instance with default config
 const api = axios.create({
