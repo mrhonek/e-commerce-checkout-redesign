@@ -133,7 +133,17 @@ const OrderConfirmation: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   // Format the order date for display
-  const orderDate = order ? new Date(order.createdAt).toLocaleDateString() : '';
+  const orderDate = order?.createdAt 
+    ? new Date(order.createdAt).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }) 
+    : new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -141,8 +151,22 @@ const OrderConfirmation: React.FC = () => {
       
       try {
         setLoading(true);
+        
+        // First try to get order from localStorage (our actual order data)
+        const storedOrderData = localStorage.getItem(`order_${orderId}`);
+        
+        if (storedOrderData) {
+          const parsedOrder = JSON.parse(storedOrderData);
+          console.log('Using stored order data:', parsedOrder);
+          setOrder(parsedOrder);
+          setLoading(false);
+          return;
+        }
+        
+        // Fallback to API if localStorage doesn't have the data
+        console.log('No stored order found, fetching from API...');
         const response = await endpoints.orders.getById(orderId);
-        console.log('Order response:', response.data);
+        console.log('Order API response:', response.data);
         
         // Handle different response structures
         const orderData = response.data.order || response.data;

@@ -488,6 +488,7 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
         email: state.shippingAddress.email
       };
       
+      // Send order to API - this will likely return mock data but we'll store our real data
       const response = await endpoints.orders.create(orderData);
       
       // Ensure we have an order ID
@@ -495,6 +496,15 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
                       response.data.order?._id || 
                       response.data.order?.id || 
                       'ORD-' + Date.now();
+      
+      // Add the orderId to our order data
+      const completeOrderData = {
+        ...orderData,
+        orderNumber: orderId,
+      };
+      
+      // Store the actual order data in localStorage for the confirmation page to use
+      localStorage.setItem(`order_${orderId}`, JSON.stringify(completeOrderData));
       
       dispatch({ type: 'SET_ORDER_ID', payload: orderId });
       dispatch({ type: 'SET_STEP', payload: 'confirmation' });
