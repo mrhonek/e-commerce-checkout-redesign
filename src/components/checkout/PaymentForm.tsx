@@ -80,9 +80,17 @@ const PaymentForm: React.FC = () => {
       if (creditCard) {
         console.log('Auto-selecting credit card:', creditCard);
         selectPaymentMethod(creditCard);
+        // Force show card form when auto-selecting credit card
+        setForceShowCardForm(true);
       } else {
         console.warn('No credit card payment method found in:', state.paymentMethods);
       }
+    }
+    
+    // Show card form if credit card is selected
+    if (state.selectedPaymentMethod?.type === 'credit_card' || 
+        state.selectedPaymentMethod?._id === 'credit_card') {
+      setForceShowCardForm(true);
     }
   }, [state.paymentMethods, state.selectedPaymentMethod, selectPaymentMethod]);
 
@@ -161,6 +169,15 @@ const PaymentForm: React.FC = () => {
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     console.log('Payment method selected:', method);  // Debug log
     selectPaymentMethod(method);
+    
+    // Automatically show card form if credit card is selected
+    if (method.type === 'credit_card' || method._id === 'credit_card' || 
+        method.name?.toLowerCase().includes('card')) {
+      setForceShowCardForm(true);
+    } else {
+      setForceShowCardForm(false);
+    }
+    
     // Clear previous errors
     setFormErrors({});
   };

@@ -160,12 +160,14 @@ function checkoutReducer(state: CheckoutState, action: CheckoutAction): Checkout
   }
 }
 
-// Create provider component
+// Define the checkout provider component
 export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(checkoutReducer, initialState);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const { cart } = useCart();
+  
+  // Get cart from CartContext
+  const { cart, clearCart } = useCart();
 
   // Update subtotal when cart changes
   React.useEffect(() => {
@@ -508,6 +510,9 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
       
       dispatch({ type: 'SET_ORDER_ID', payload: orderId });
       dispatch({ type: 'SET_STEP', payload: 'confirmation' });
+      
+      // Clear the cart after successful order
+      await clearCart();
       
       return orderId;
     } catch (err) {
