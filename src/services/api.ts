@@ -102,12 +102,12 @@ const endpoints = {
   
   // Cart
   cart: {
-    get: () => api.get('/cart'),
+    get: () => api.get('/api/cart'),
     add: (data: { productId: string; name: string; price: number; quantity: number; image?: string }) => 
-      api.post('/cart', data),
-    update: (itemId: string, data: { quantity: number }) => api.put(`/cart/${itemId}`, data),
-    remove: (itemId: string) => api.delete(`/cart/${itemId}`),
-    clear: () => api.delete('/cart'),
+      api.post('/api/cart', data),
+    update: (itemId: string, data: { quantity: number }) => api.put(`/api/cart/${itemId}`, data),
+    remove: (itemId: string) => api.delete(`/api/cart/${itemId}`),
+    clear: () => api.delete('/api/cart'),
   },
   
   // Shipping
