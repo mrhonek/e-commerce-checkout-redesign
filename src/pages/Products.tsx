@@ -195,6 +195,9 @@ const Products: React.FC = () => {
 
   // Filter products based on current filter settings
   const filteredProducts = products.filter(product => {
+    // Ensure inStock is true by default if not explicitly set to false
+    product.inStock = product.inStock !== false;
+    
     // Filter by search term
     if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;

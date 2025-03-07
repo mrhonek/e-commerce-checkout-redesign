@@ -48,6 +48,11 @@ const ProductDetails: React.FC = () => {
         // Add debugging to check what fields are available
         console.log('[Debug] Product data:', data);
         
+        // Ensure product is in stock by default if not explicitly set to false
+        if (data) {
+          data.inStock = data.inStock !== false;
+        }
+        
         setProduct(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch product');
