@@ -64,6 +64,11 @@ const categories = [
   }
 ];
 
+// Helper function for image error handling
+const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  e.currentTarget.src = 'https://via.placeholder.com/300x300?text=Product+Image';
+};
+
 export const Home: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
@@ -156,6 +161,7 @@ export const Home: React.FC = () => {
                         src={product.image}
                         alt={product.name}
                         className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={handleImageError}
                       />
                     </div>
                     <div className="p-4">
@@ -194,6 +200,7 @@ export const Home: React.FC = () => {
                       src={category.image}
                       alt={category.name}
                       className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={handleImageError}
                     />
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
