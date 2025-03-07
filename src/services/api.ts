@@ -112,25 +112,25 @@ const endpoints = {
   
   // Shipping
   shipping: {
-    getOptions: () => api.get('/shipping/options'),
+    getOptions: () => api.get('/api/shipping/options'),
     calculate: (data: { address: any; items: any[]; shippingOptionId: string }) => 
-      api.post('/shipping/calculate', data),
-    validateAddress: (address: any) => api.post('/shipping/validate-address', address),
+      api.post('/api/shipping/calculate', data),
+    validateAddress: (address: any) => api.post('/api/shipping/validate-address', address),
   },
   
   // Payment
   payment: {
-    getMethods: () => api.get('/payment/methods'),
+    getMethods: () => api.get('/api/payment/methods'),
     createIntent: (data: { amount: number; currency: string; paymentMethodId?: string }) => 
-      api.post('/payment/create-intent', data),
-    confirm: (data: { paymentIntentId: string }) => api.post('/payment/confirm', data),
+      api.post('/api/payment/create-intent', data),
+    confirm: (data: { paymentIntentId: string }) => api.post('/api/payment/confirm', data),
   },
   
   // Orders
   orders: {
-    getAll: () => api.get('/order'),
-    getById: (orderId: string) => api.get(`/order/${orderId}`),
-    create: (data: any) => api.post('/order', data),
+    getAll: () => api.get('/api/orders'),
+    getById: (orderId: string) => api.get(`/api/orders/${orderId}`),
+    create: (data: any) => api.post('/api/orders', data),
   },
 };
 
