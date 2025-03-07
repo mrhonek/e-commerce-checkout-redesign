@@ -18,11 +18,54 @@ export const getSafeImageUrl = (url?: string): string => {
 };
 
 /**
- * Image component with built-in error handling
+ * Image error handler that uses inline SVG as data URL
+ * This provides a reliable fallback that doesn't trigger additional network requests
  */
-export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
-  event.currentTarget.src = FALLBACK_IMAGE_BASE64;
-  event.currentTarget.onerror = null; // Prevent infinite error loop
+export const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>, size = 'medium') => {
+  // Get the target element
+  const img = e.currentTarget;
+  
+  // Prevent infinite error loops by removing the error handler
+  img.onerror = null;
+  
+  // Set dimensions based on size parameter
+  let width, height, fontSize;
+  switch (size) {
+    case 'small':
+      width = 100;
+      height = 100;
+      fontSize = 12;
+      break;
+    case 'large':
+      width = 600;
+      height = 400;
+      fontSize = 20;
+      break;
+    case 'medium':
+    default:
+      width = 300;
+      height = 300;
+      fontSize = 16;
+  }
+  
+  // Create a data URL with an SVG placeholder
+  const svgContent = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <rect fill="#f0f0f0" width="${width}" height="${height}"/>
+      <text fill="#999" font-family="Arial,Helvetica,sans-serif" font-size="${fontSize}" text-anchor="middle" x="${width/2}" y="${height/2}">
+        Image not available
+      </text>
+    </svg>
+  `;
+  
+  // Clean up the SVG content (remove newlines and extra spaces)
+  const cleanSvg = svgContent.replace(/\s+/g, ' ').trim();
+  
+  // Encode the SVG for use in a data URL
+  const encodedSvg = encodeURIComponent(cleanSvg);
+  
+  // Set the image source to the data URL
+  img.src = `data:image/svg+xml;charset=UTF-8,${encodedSvg}`;
 };
 
 /**

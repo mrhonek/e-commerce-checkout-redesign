@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ShoppingBag, TruckIcon, ShieldCheck, Clock, ArrowRight } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import { handleImageError } from '../utils/imageUtils';
 
 // Mock data for featured products
 const featuredProducts = [
@@ -63,11 +64,6 @@ const categories = [
     image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YmVhdXR5JTIwcHJvZHVjdHN8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=600&q=60',
   }
 ];
-
-// Helper function for image error handling
-const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-  e.currentTarget.src = 'https://via.placeholder.com/300x300?text=Product+Image';
-};
 
 export const Home: React.FC = () => {
   return (

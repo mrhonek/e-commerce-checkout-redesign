@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Heart, ShoppingCart, ArrowLeft, Star, CheckCircle, Truck } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { formatCurrency } from '../utils/formatters';
+import { handleImageError } from '../utils/imageUtils';
 
 // API base URL with explicit /api/ path
 const API_BASE_URL = 'https://e-commerce-checkout-api-production.up.railway.app/api';
@@ -159,11 +160,6 @@ const ProductDetails: React.FC = () => {
     }
   };
 
-  // Helper function for image error handling
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    e.currentTarget.src = 'https://via.placeholder.com/600x400?text=Product+Image+Not+Available';
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -221,7 +217,7 @@ const ProductDetails: React.FC = () => {
             src={product.image} 
             alt={product.name} 
             className="w-full h-auto object-cover"
-            onError={handleImageError}
+            onError={(e) => handleImageError(e, 'large')}
           />
         </div>
 
