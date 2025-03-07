@@ -26,11 +26,44 @@ const PaymentForm: React.FC = () => {
     expiryDate: '',
     cvv: ''
   });
+  const [localLoading, setLocalLoading] = useState(false);
 
-  // Fetch payment methods when component mounts
+  // Fetch payment methods when component mounts - with better error handling
   useEffect(() => {
-    fetchPaymentMethods();
-  }, [fetchPaymentMethods]);
+    let isMounted = true;
+    
+    const getPaymentMethods = async () => {
+      try {
+        // Only fetch if no payment methods exist yet
+        if (state.paymentMethods.length === 0) {
+          setLocalLoading(true);
+          const methods = await fetchPaymentMethods();
+          
+          // If component is still mounted and we have methods, select the first one
+          if (isMounted && methods && methods.length > 0 && !state.selectedPaymentMethod) {
+            selectPaymentMethod(methods[0]);
+          }
+        } else if (!state.selectedPaymentMethod && state.paymentMethods.length > 0) {
+          // If we already have methods but none selected, select the first one
+          selectPaymentMethod(state.paymentMethods[0]);
+        }
+      } catch (err) {
+        console.error('Error in payment methods flow:', err);
+        // No need to handle here as fetchPaymentMethods already has default fallbacks
+      } finally {
+        if (isMounted) {
+          setLocalLoading(false);
+        }
+      }
+    };
+    
+    getPaymentMethods();
+    
+    // Cleanup function to prevent state updates if component unmounts
+    return () => {
+      isMounted = false;
+    };
+  }, [fetchPaymentMethods, selectPaymentMethod, state.paymentMethods, state.selectedPaymentMethod]);
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     selectPaymentMethod(method);
@@ -154,7 +187,7 @@ const PaymentForm: React.FC = () => {
         <div className="mb-8">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Select Payment Method</h3>
           
-          {loading ? (
+          {localLoading ? (
             <div className="flex justify-center py-4">
               <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
             </div>
@@ -307,7 +340,7 @@ const PaymentForm: React.FC = () => {
           
           <button
             type="submit"
-            disabled={loading}
+            disabled={localLoading}
             className="bg-blue-600 border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
             Review Order

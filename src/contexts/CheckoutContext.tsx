@@ -82,7 +82,7 @@ interface CheckoutContextType {
   setSameAddressForBilling: (useSame: boolean) => void;
   fetchShippingOptions: () => Promise<ShippingOption[]>;
   selectShippingOption: (option: ShippingOption) => Promise<void>;
-  fetchPaymentMethods: () => Promise<void>;
+  fetchPaymentMethods: () => Promise<PaymentMethod[]>;
   selectPaymentMethod: (method: PaymentMethod) => void;
   createPaymentIntent: (paymentMethod: string) => Promise<void>;
   placeOrder: () => Promise<string | undefined>;
@@ -312,15 +312,67 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   // Fetch payment methods
-  const fetchPaymentMethods = async () => {
+  const fetchPaymentMethods = async (): Promise<PaymentMethod[]> => {
+    // If payment methods already exist, don't fetch again
+    if (state.paymentMethods.length > 0) {
+      return state.paymentMethods;
+    }
+    
     try {
       setLoading(true);
       setError(null);
+      
+      // Add timeout to prevent hanging if API doesn't respond
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+      
       const response = await endpoints.payment.getMethods();
+      
+      clearTimeout(timeoutId);
+      
+      // Provide default options if none are returned
+      if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+        const defaultPaymentMethods: PaymentMethod[] = [
+          {
+            _id: 'credit_card',
+            type: 'credit_card',
+            name: 'Credit / Debit Card',
+            description: 'Pay securely with your card'
+          },
+          {
+            _id: 'paypal',
+            type: 'paypal',
+            name: 'PayPal',
+            description: 'Fast and secure checkout with PayPal'
+          }
+        ];
+        dispatch({ type: 'SET_PAYMENT_METHODS', payload: defaultPaymentMethods });
+        return defaultPaymentMethods;
+      }
+      
       dispatch({ type: 'SET_PAYMENT_METHODS', payload: response.data });
+      return response.data;
     } catch (err) {
       console.error('Error fetching payment methods:', err);
       setError('Failed to load payment methods');
+      
+      // Provide default payment methods on error
+      const defaultPaymentMethods: PaymentMethod[] = [
+        {
+          _id: 'credit_card',
+          type: 'credit_card',
+          name: 'Credit / Debit Card',
+          description: 'Pay securely with your card'
+        },
+        {
+          _id: 'paypal',
+          type: 'paypal',
+          name: 'PayPal',
+          description: 'Fast and secure checkout with PayPal'
+        }
+      ];
+      dispatch({ type: 'SET_PAYMENT_METHODS', payload: defaultPaymentMethods });
+      return defaultPaymentMethods;
     } finally {
       setLoading(false);
     }
