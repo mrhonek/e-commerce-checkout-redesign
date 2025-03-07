@@ -6,6 +6,9 @@ import { formatCurrency } from '../utils/formatters';
 // Get API URL from environment variable or use the deployed backend URL
 const API_URL = import.meta.env.VITE_API_URL || 'https://e-commerce-checkout-api-production.up.railway.app/api';
 
+// Make sure the API URL doesn't end with a slash
+const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+
 // Debug log function
 const logDebug = (message: string, data?: any) => {
   console.log(`[Debug] ${message}`, data || '');
@@ -50,10 +53,11 @@ const Products: React.FC = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        logDebug('Fetching products from:', API_URL);
+        const productsUrl = `${baseUrl}/products`;
+        logDebug('Fetching products from:', productsUrl);
         
-        // Use the API_URL from environment variable
-        const response = await fetch(`${API_URL}/products`);
+        // Use the constructed URL
+        const response = await fetch(productsUrl);
         
         logDebug('Response status:', response.status);
         
