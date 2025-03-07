@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Filter, Search, ChevronDown, Star } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 
@@ -28,6 +28,7 @@ interface Product {
 type SortOption = 'featured' | 'price-low' | 'price-high' | 'rating' | 'newest';
 
 const Products: React.FC = () => {
+  const { category } = useParams<{ category: string }>();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +47,21 @@ const Products: React.FC = () => {
 
   // Categories derived from products
   const categories = ['all', ...new Set(products.map(product => product.category.toLowerCase()))];
+
+  // Update selected category when route parameter changes
+  useEffect(() => {
+    if (category) {
+      // Format category from URL (e.g., "home-kitchen" -> "home & kitchen" or "electronics" -> "electronics")
+      let formattedCategory = category.toLowerCase();
+      
+      // Handle special cases like "home-kitchen" -> "home & kitchen"
+      if (formattedCategory === 'home-kitchen') {
+        formattedCategory = 'home & kitchen';
+      }
+      
+      setSelectedCategory(formattedCategory);
+    }
+  }, [category]);
 
   useEffect(() => {
     const fetchProducts = async () => {
