@@ -27,6 +27,7 @@ const PaymentForm: React.FC = () => {
     cvv: ''
   });
   const [localLoading, setLocalLoading] = useState(false);
+  const [forceShowCardForm, setForceShowCardForm] = useState(false);
 
   // Fetch payment methods when component mounts - with better error handling
   useEffect(() => {
@@ -65,6 +66,26 @@ const PaymentForm: React.FC = () => {
     };
   }, [fetchPaymentMethods, selectPaymentMethod, state.paymentMethods, state.selectedPaymentMethod]);
 
+  // Add better rendering and forced selection for credit card
+  useEffect(() => {
+    // Debug full objects to see what's in the payment methods
+    console.log('Full payment methods:', JSON.stringify(state.paymentMethods));
+    
+    // Auto-select credit card if no payment method is selected
+    if (state.paymentMethods.length > 0 && !state.selectedPaymentMethod) {
+      const creditCard = state.paymentMethods.find(m => 
+        m.type === 'credit_card' || m._id === 'credit_card'
+      );
+      
+      if (creditCard) {
+        console.log('Auto-selecting credit card:', creditCard);
+        selectPaymentMethod(creditCard);
+      } else {
+        console.warn('No credit card payment method found in:', state.paymentMethods);
+      }
+    }
+  }, [state.paymentMethods, state.selectedPaymentMethod, selectPaymentMethod]);
+
   // Check if a payment method is selected
   const isPaymentMethodSelected = Boolean(state.selectedPaymentMethod);
 
@@ -81,14 +102,46 @@ const PaymentForm: React.FC = () => {
     (state.selectedPaymentMethod.type === 'credit_card' || 
      state.selectedPaymentMethod._id === 'credit_card');
 
-  // Handle credit card selection specifically
+  // Use this for conditional rendering
+  const shouldShowCardForm = showCardDetails || forceShowCardForm;
+
+  // Handle credit card selection specifically with a more robust approach
   const selectCreditCard = () => {
-    const creditCardMethod = state.paymentMethods.find(m => 
-      m.type === 'credit_card' || m._id === 'credit_card'
-    );
+    // Force show card form regardless of payment method type
+    setForceShowCardForm(true);
+    
+    // Try all possible combinations to find credit card payment method
+    let creditCardMethod = state.paymentMethods.find(m => m.type === 'credit_card');
+    
+    if (!creditCardMethod) {
+      creditCardMethod = state.paymentMethods.find(m => m._id === 'credit_card');
+    }
+    
+    if (!creditCardMethod) {
+      creditCardMethod = state.paymentMethods.find(m => 
+        m._id.toLowerCase().includes('credit') || 
+        m.name.toLowerCase().includes('credit')
+      );
+    }
+    
+    // As a last resort, just take the first method and force its type
+    if (!creditCardMethod && state.paymentMethods.length > 0) {
+      creditCardMethod = {
+        ...state.paymentMethods[0],
+        type: 'credit_card' as 'credit_card'
+      };
+    }
+    
     if (creditCardMethod) {
-      console.log('Selecting credit card method:', creditCardMethod);
-      selectPaymentMethod(creditCardMethod);
+      console.log('Selecting credit card method with override:', creditCardMethod);
+      // Create a new object to ensure it has the right type
+      const fixedMethod = {
+        ...creditCardMethod,
+        type: 'credit_card' as 'credit_card'
+      };
+      selectPaymentMethod(fixedMethod);
+    } else {
+      console.error('No payment methods available');
     }
   };
 
@@ -227,6 +280,24 @@ const PaymentForm: React.FC = () => {
         </div>
       )}
       
+      {/* Debug info - ALWAYS show this regardless of environment */}
+      <div className="bg-yellow-50 p-3 rounded mb-4 text-sm">
+        <p><strong>Having trouble seeing card form?</strong> Try the button below:</p>
+        <button 
+          type="button" 
+          onClick={selectCreditCard}
+          className="mt-2 bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700"
+        >
+          Click here to show Credit Card Form
+        </button>
+        <div className="mt-2 text-xs">
+          <div><strong>Selected method:</strong> {state.selectedPaymentMethod?._id}</div>
+          <div><strong>Type:</strong> {state.selectedPaymentMethod?.type}</div>
+          <div><strong>Show card details:</strong> {shouldShowCardForm ? 'Yes' : 'No'}</div>
+          <div><strong>Force mode:</strong> {forceShowCardForm ? 'Active' : 'Inactive'}</div>
+        </div>
+      </div>
+      
       <form onSubmit={handleSubmit} noValidate>
         {/* Payment Methods - Make the entire div more obviously clickable */}
         <div className="mb-8">
@@ -323,8 +394,8 @@ const PaymentForm: React.FC = () => {
           </div>
         )}
         
-        {/* Credit Card Details (shown only if credit card method is selected) */}
-        {showCardDetails && (
+        {/* Credit Card Details (modified condition) */}
+        {shouldShowCardForm && (
           <div className="mb-8 border-t pt-6">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Card Details</h3>
             
