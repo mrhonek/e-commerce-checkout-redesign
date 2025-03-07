@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image } from '../ui/Image';
 
 interface CartItemProps {
   id: string;
@@ -29,7 +30,7 @@ const CartItem: React.FC<CartItemProps> = ({
     <div className="flex items-center p-4 border-b border-gray-200">
       <div className="w-24 h-24 flex-shrink-0 overflow-hidden rounded-md bg-gray-100">
         {image ? (
-          <img
+          <Image
             src={image}
             alt={name}
             className="w-full h-full object-center object-cover"

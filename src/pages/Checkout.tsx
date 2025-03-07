@@ -6,22 +6,11 @@ import ShippingForm from '../components/checkout/ShippingForm';
 import PaymentForm from '../components/checkout/PaymentForm';
 import OrderReview from '../components/checkout/OrderReview';
 import CheckoutSteps from '../components/checkout/CheckoutSteps';
+import { Image } from '../components/ui/Image';
 
-// Fallback image as base64 for small footprint (a simple gray image)
-const FALLBACK_IMAGE_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAYAAAA8AXHiAAAABmJLR0QA/wD/AP+gvaeTAAAASUlEQVR4nO3BAQ0AAADCoPdPbQ43oAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA5gBi9QABT9zRHQAAAABJRU5ErkJggg==';
-
-// Product image component with fallback
+// Product image component which is now redundant - we'll use the Image component instead
 const ProductImage = ({ item }: { item: any }) => {
-  const [error, setError] = React.useState(false);
-  
-  return (
-    <img 
-      src={error ? FALLBACK_IMAGE_BASE64 : item.image || FALLBACK_IMAGE_BASE64}
-      alt={item.name}
-      className="w-12 h-12 object-cover rounded-md"
-      onError={() => setError(true)}
-    />
-  );
+  return <Image src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-md" />;
 };
 
 const Checkout: React.FC = () => {

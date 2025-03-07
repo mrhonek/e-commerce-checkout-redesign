@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { endpoints } from '../services/api';
+import { processCartItems } from '../utils/imageUtils';
 
 // Define types
 export interface CartItem {
@@ -61,10 +62,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setLoading(true);
         const response = await endpoints.cart.get();
         const cartData = response.data;
-        const totals = calculateCartTotals(cartData.items);
+        
+        // Process images to handle placeholders
+        const processedItems = processCartItems(cartData.items);
+        
+        const totals = calculateCartTotals(processedItems);
         
         setCart({
-          items: cartData.items.map((item: { id?: string; _id?: string; productId?: string }) => ({
+          items: processedItems.map((item: { id?: string; _id?: string; productId?: string }) => ({
             ...item,
             id: item.id || item._id || `item-${Date.now()}`, // Ensure we always have an id
             productId: item.productId || '' // Ensure we always have a productId (even if empty)
@@ -98,10 +103,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       
       const cartData = response.data;
-      const totals = calculateCartTotals(cartData.items);
+      
+      // Process images to handle placeholders
+      const processedItems = processCartItems(cartData.items);
+      
+      const totals = calculateCartTotals(processedItems);
       
       setCart({
-        items: cartData.items.map((item: { id?: string; _id?: string; productId?: string }) => ({
+        items: processedItems.map((item: { id?: string; _id?: string; productId?: string }) => ({
           ...item,
           id: item.id || item._id || `item-${Date.now()}`, // Ensure we always have an id
           productId: item.productId || '' // Ensure we always have a productId (even if empty)
@@ -124,10 +133,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await endpoints.cart.update(itemId, { quantity });
       
       const cartData = response.data;
-      const totals = calculateCartTotals(cartData.items);
+      
+      // Process images to handle placeholders
+      const processedItems = processCartItems(cartData.items);
+      
+      const totals = calculateCartTotals(processedItems);
       
       setCart({
-        items: cartData.items.map((item: { id?: string; _id?: string; productId?: string }) => ({
+        items: processedItems.map((item: { id?: string; _id?: string; productId?: string }) => ({
           ...item,
           id: item.id || item._id || `item-${Date.now()}`, // Ensure we always have an id
           productId: item.productId || '' // Ensure we always have a productId (even if empty)
@@ -150,10 +163,14 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await endpoints.cart.remove(itemId);
       
       const cartData = response.data;
-      const totals = calculateCartTotals(cartData.items);
+      
+      // Process images to handle placeholders
+      const processedItems = processCartItems(cartData.items);
+      
+      const totals = calculateCartTotals(processedItems);
       
       setCart({
-        items: cartData.items.map((item: { id?: string; _id?: string; productId?: string }) => ({
+        items: processedItems.map((item: { id?: string; _id?: string; productId?: string }) => ({
           ...item,
           id: item.id || item._id || `item-${Date.now()}`, // Ensure we always have an id
           productId: item.productId || '' // Ensure we always have a productId (even if empty)

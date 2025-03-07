@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { TrashIcon, PlusIcon, MinusIcon } from 'lucide-react';
+import { Image } from '../components/ui/Image';
 
 const Cart: React.FC = () => {
   const { cart, loading, error, updateCartItem, removeFromCart } = useCart();
@@ -86,7 +87,7 @@ const Cart: React.FC = () => {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-16 w-16">
                           {item.image ? (
-                            <img
+                            <Image
                               src={item.image}
                               alt={item.name}
                               className="h-16 w-16 rounded-md object-cover"
