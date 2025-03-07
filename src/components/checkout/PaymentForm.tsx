@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCheckout, PaymentMethod } from '../../contexts/CheckoutContext';
-import { CreditCard, Check } from 'lucide-react';
+import { CreditCard, Check, Circle, CheckCircle } from 'lucide-react';
 
 interface CardDetails {
   cardNumber: string;
@@ -377,20 +377,17 @@ const PaymentForm: React.FC = () => {
                         : 'border-gray-200 hover:bg-gray-50'}`}
                     onClick={() => handlePaymentMethodChange(method)}
                   >
-                    <div className="relative flex items-center justify-center">
-                      <input
-                        type="radio"
-                        id={`payment-${method._id}`}
-                        name="paymentMethod"
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
-                        checked={isSelected}
-                        onChange={() => handlePaymentMethodChange(method)}
-                      />
+                    {/* Selected/unselected indicator */}
+                    <div className="relative flex items-center justify-center mr-3">
+                      {isSelected ? (
+                        <CheckCircle className="w-5 h-5 text-blue-600" />
+                      ) : (
+                        <Circle className="w-5 h-5 text-gray-300" />
+                      )}
                     </div>
-                    <label 
-                      htmlFor={`payment-${method._id}`} 
-                      className="ml-3 flex items-center cursor-pointer flex-grow"
-                    >
+                    
+                    {/* Payment method icon and details */}
+                    <div className="flex items-center flex-grow">
                       {isCreditCard ? (
                         <CreditCard className={`h-6 w-6 mr-2 ${isSelected ? 'text-blue-500' : 'text-gray-400'}`} />
                       ) : (
@@ -402,7 +399,7 @@ const PaymentForm: React.FC = () => {
                           <div className="text-sm text-gray-500">{method.description}</div>
                         )}
                       </div>
-                    </label>
+                    </div>
                   </div>
                 );
               })}
