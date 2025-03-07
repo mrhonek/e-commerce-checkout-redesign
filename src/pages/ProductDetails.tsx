@@ -9,6 +9,7 @@ const API_BASE_URL = 'https://e-commerce-checkout-api-production.up.railway.app/
 
 interface Product {
   _id: string;
+  id?: string; // Add optional id field to handle different API responses
   name: string;
   description: string;
   price: number;
@@ -43,6 +44,10 @@ const ProductDetails: React.FC = () => {
         }
         
         const data = await response.json();
+        
+        // Add debugging to check what fields are available
+        console.log('[Debug] Product data:', data);
+        
         setProduct(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch product');
@@ -82,7 +87,7 @@ const ProductDetails: React.FC = () => {
   const handleAddToCart = () => {
     if (product) {
       addToCart({
-        _id: product._id,
+        _id: product._id || product.id || '',
         name: product.name,
         price: product.price,
         image: product.image
