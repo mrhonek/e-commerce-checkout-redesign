@@ -68,9 +68,6 @@ const PaymentForm: React.FC = () => {
 
   // Add better rendering and forced selection for credit card
   useEffect(() => {
-    // Debug full objects to see what's in the payment methods
-    console.log('Full payment methods:', JSON.stringify(state.paymentMethods));
-    
     // Auto-select credit card if no payment method is selected
     if (state.paymentMethods.length > 0 && !state.selectedPaymentMethod) {
       const creditCard = state.paymentMethods.find(m => 
@@ -78,12 +75,9 @@ const PaymentForm: React.FC = () => {
       );
       
       if (creditCard) {
-        console.log('Auto-selecting credit card:', creditCard);
         selectPaymentMethod(creditCard);
         // Force show card form when auto-selecting credit card
         setForceShowCardForm(true);
-      } else {
-        console.warn('No credit card payment method found in:', state.paymentMethods);
       }
     }
     
@@ -97,13 +91,8 @@ const PaymentForm: React.FC = () => {
   // Check if a payment method is selected
   const isPaymentMethodSelected = Boolean(state.selectedPaymentMethod);
 
-  // Add debug logging for payment method
-  console.log('Selected payment method:', state.selectedPaymentMethod);
-  console.log('Payment methods:', state.paymentMethods);
-
   // Check if payment method type is available and fix it if needed
   const paymentMethodType = state.selectedPaymentMethod?.type;
-  console.log('Payment method type:', paymentMethodType);
   
   // Fix the card details display condition
   const showCardDetails = state.selectedPaymentMethod && 
@@ -112,11 +101,6 @@ const PaymentForm: React.FC = () => {
 
   // Use this for conditional rendering
   const shouldShowCardForm = showCardDetails || forceShowCardForm;
-
-  // Debug logging
-  console.log('shouldShowCardForm:', shouldShowCardForm); 
-  console.log('showCardDetails:', showCardDetails);
-  console.log('forceShowCardForm:', forceShowCardForm);
 
   useEffect(() => {
     // If we have a selected payment method that's a credit card, force show the form
@@ -128,7 +112,6 @@ const PaymentForm: React.FC = () => {
          state.selectedPaymentMethod.name.toLowerCase().includes('card'));
       
       if (isCardMethod) {
-        console.log('Setting force show card from selected method effect');
         setForceShowCardForm(true);
       }
     }
@@ -169,7 +152,6 @@ const PaymentForm: React.FC = () => {
       }
       
       if (creditCardMethod) {
-        console.log('Selecting credit card method with override:', creditCardMethod);
         // Create a new object to ensure it has the right type
         const fixedMethod = {
           ...creditCardMethod,
@@ -178,8 +160,6 @@ const PaymentForm: React.FC = () => {
           _id: creditCardMethod._id || creditCardMethod.id || 'credit_card'
         };
         selectPaymentMethod(fixedMethod);
-      } else {
-        console.error('No payment methods available');
       }
     } catch (err) {
       console.error('Error selecting credit card method:', err);
@@ -188,15 +168,12 @@ const PaymentForm: React.FC = () => {
   };
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
-    console.log('Payment method selected:', method);  // Debug log
-    
     // Check if this is a credit card method and show form if it is
     const isCreditCard = method.type === 'credit_card' || 
                         method._id === 'credit_card' || 
                         method.name?.toLowerCase().includes('card');
     
     if (isCreditCard) {
-      console.log('Credit card method detected, showing form');
       setForceShowCardForm(true);
       
       // Make sure it has the correct type
@@ -216,7 +193,6 @@ const PaymentForm: React.FC = () => {
 
   const handleCardDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    console.log(`Updating ${name} with value: ${value}`); // Debug log
     
     // Format card number with spaces
     if (name === 'cardNumber') {
@@ -325,8 +301,8 @@ const PaymentForm: React.FC = () => {
     // If we're in force mode but don't have a credit card payment method selected, create one
     if (forceShowCardForm && (!state.selectedPaymentMethod || state.selectedPaymentMethod.type !== 'credit_card')) {
       try {
-        // Create a synthetic payment method
-        const syntheticMethod = {
+        // Create a payment method based on card details
+        const cardMethod = {
           _id: 'credit_card',
           id: 'credit_card',
           type: 'credit_card' as 'credit_card',
@@ -334,8 +310,7 @@ const PaymentForm: React.FC = () => {
           description: 'Card ending in ' + cardDetails.cardNumber.slice(-4)
         };
         
-        console.log('Creating synthetic payment method:', syntheticMethod);
-        selectPaymentMethod(syntheticMethod);
+        selectPaymentMethod(cardMethod);
         
         // Short delay to allow state to update before continuing
         setTimeout(() => {
@@ -346,7 +321,10 @@ const PaymentForm: React.FC = () => {
         
         return;
       } catch (err) {
-        console.error('Error creating synthetic payment method:', err);
+        // Handle error gracefully
+        setFormErrors({
+          general: 'There was an error setting up your payment method. Please try again.'
+        });
       }
     }
     
@@ -373,230 +351,188 @@ const PaymentForm: React.FC = () => {
         </div>
       )}
       
-      {/* Debug info - ALWAYS show this regardless of environment */}
-      <div className="bg-yellow-50 p-3 rounded mb-4 text-sm">
-        <p><strong>Having trouble seeing card form?</strong> Try the button below:</p>
-        <button 
-          type="button" 
-          onClick={selectCreditCard}
-          className="mt-2 bg-blue-600 text-white px-4 py-2 rounded font-medium hover:bg-blue-700"
-        >
-          Click here to show Credit Card Form
-        </button>
-        <div className="mt-2 text-xs">
-          <div><strong>Selected method:</strong> {state.selectedPaymentMethod?._id}</div>
-          <div><strong>Type:</strong> {state.selectedPaymentMethod?.type}</div>
-          <div><strong>Show card details:</strong> {shouldShowCardForm ? 'Yes' : 'No'}</div>
-          <div><strong>Force mode:</strong> {forceShowCardForm ? 'Active' : 'Inactive'}</div>
+      {loading || localLoading ? (
+        <div className="flex justify-center items-center py-6">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </div>
-      
-      <form onSubmit={handleSubmit} noValidate>
-        {/* Payment Methods - Make the entire div more obviously clickable */}
-        <div className="mb-8">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Select Payment Method</h3>
-          
-          {localLoading ? (
-            <div className="flex justify-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
-          ) : (
+      ) : (
+        <form onSubmit={handleSubmit} noValidate>
+          {/* Payment Methods - Make the entire div more obviously clickable */}
+          <div className="mb-8">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Select Payment Method</h3>
+            
             <div className="space-y-4">
-              {state.paymentMethods.map((method) => (
-                <div 
-                  key={method._id} 
-                  className={`flex items-center p-4 border rounded cursor-pointer transition-colors
-                    ${state.selectedPaymentMethod?._id === method._id 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-200 hover:bg-gray-50'}`}
-                  onClick={() => handlePaymentMethodChange(method)}
-                >
-                  <input
-                    type="radio"
-                    id={`payment-${method._id}`}
-                    name="paymentMethod"
-                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                    checked={state.selectedPaymentMethod?._id === method._id}
-                    onChange={() => handlePaymentMethodChange(method)}
-                  />
-                  <label 
-                    htmlFor={`payment-${method._id}`} 
-                    className="ml-3 flex items-center cursor-pointer flex-grow"
+              {state.paymentMethods.map((method) => {
+                const isSelected = state.selectedPaymentMethod?._id === method._id;
+                const isCreditCard = method.type === 'credit_card' || 
+                                    method._id === 'credit_card' || 
+                                    (method.name && method.name.toLowerCase().includes('card'));
+                
+                return (
+                  <div 
+                    key={method._id} 
+                    className={`flex items-center p-4 border rounded cursor-pointer transition-colors
+                      ${isSelected 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : 'border-gray-200 hover:bg-gray-50'}`}
+                    onClick={() => handlePaymentMethodChange(method)}
                   >
-                    {method.type === 'credit_card' || method._id === 'credit_card' ? (
-                      <CreditCard className="h-6 w-6 text-blue-500 mr-2" />
-                    ) : (
-                      <Check className="h-6 w-6 text-green-500 mr-2" />
-                    )}
-                    <div>
-                      <div className="font-medium">{method.name}</div>
-                      {method.description && (
-                        <div className="text-sm text-gray-500">{method.description}</div>
-                      )}
+                    <div className="relative flex items-center justify-center">
+                      <input
+                        type="radio"
+                        id={`payment-${method._id}`}
+                        name="paymentMethod"
+                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
+                        checked={isSelected}
+                        onChange={() => handlePaymentMethodChange(method)}
+                      />
                     </div>
-                  </label>
-                </div>
-              ))}
-              
-              {/* Emergency credit card selection button */}
-              <button 
-                type="button" 
-                onClick={selectCreditCard}
-                className="mt-4 bg-blue-100 text-blue-700 px-4 py-2 rounded text-sm font-medium hover:bg-blue-200"
-              >
-                Select Credit Card Payment
-              </button>
+                    <label 
+                      htmlFor={`payment-${method._id}`} 
+                      className="ml-3 flex items-center cursor-pointer flex-grow"
+                    >
+                      {isCreditCard ? (
+                        <CreditCard className={`h-6 w-6 mr-2 ${isSelected ? 'text-blue-500' : 'text-gray-400'}`} />
+                      ) : (
+                        <Check className={`h-6 w-6 mr-2 ${isSelected ? 'text-green-500' : 'text-gray-400'}`} />
+                      )}
+                      <div>
+                        <div className="font-medium">{method.name}</div>
+                        {method.description && (
+                          <div className="text-sm text-gray-500">{method.description}</div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                );
+              })}
               
               {formErrors.paymentMethod && (
                 <p className="text-sm text-red-600 mt-1">{formErrors.paymentMethod}</p>
               )}
             </div>
-          )}
-        </div>
-        
-        {/* Debug info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="bg-gray-100 p-2 text-xs rounded mb-4">
-            <div><strong>Selected method:</strong> {state.selectedPaymentMethod?._id}</div>
-            <div><strong>Type:</strong> {state.selectedPaymentMethod?.type}</div>
-            <div><strong>Show card details:</strong> {showCardDetails ? 'Yes' : 'No'}</div>
           </div>
-        )}
-        
-        {/* Card Details Form - shown when credit card is selected */}
-        {shouldShowCardForm && (
-          <div className="mt-6 border border-gray-200 rounded-md p-4 bg-gray-50">
-            <h3 className="text-lg font-medium mb-4">Card Details</h3>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">
-                  Card Number
-                </label>
-                <input
-                  type="text"
-                  id="cardNumber"
-                  name="cardNumber"
-                  placeholder="0000 0000 0000 0000"
-                  value={cardDetails.cardNumber}
-                  onChange={handleCardDetailsChange}
-                  className={`mt-1 block w-full rounded-md shadow-sm ${
-                    formErrors.cardNumber
-                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                  }`}
-                />
-                {formErrors.cardNumber && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.cardNumber}</p>
-                )}
-              </div>
-              
-              <div>
-                <label htmlFor="cardHolder" className="block text-sm font-medium text-gray-700">
-                  Cardholder Name
-                </label>
-                <input
-                  type="text"
-                  id="cardHolder"
-                  name="cardHolder"
-                  placeholder="John Doe"
-                  value={cardDetails.cardHolder}
-                  onChange={handleCardDetailsChange}
-                  className={`mt-1 block w-full rounded-md shadow-sm ${
-                    formErrors.cardHolder
-                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                  }`}
-                />
-                {formErrors.cardHolder && (
-                  <p className="mt-1 text-sm text-red-600">{formErrors.cardHolder}</p>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+          
+          {/* Card Details Form - shown when credit card is selected */}
+          {shouldShowCardForm && (
+            <div className="mt-6 border border-gray-200 rounded-md p-4 bg-gray-50">
+              <h3 className="text-lg font-medium mb-4">Card Details</h3>
+              <div className="space-y-4">
                 <div>
-                  <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
-                    Expiry Date
+                  <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700">
+                    Card Number
                   </label>
                   <input
                     type="text"
-                    id="expiryDate"
-                    name="expiryDate"
-                    placeholder="MM/YY"
-                    value={cardDetails.expiryDate}
+                    id="cardNumber"
+                    name="cardNumber"
+                    placeholder="0000 0000 0000 0000"
+                    value={cardDetails.cardNumber}
                     onChange={handleCardDetailsChange}
                     className={`mt-1 block w-full rounded-md shadow-sm ${
-                      formErrors.expiryDate
+                      formErrors.cardNumber
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
-                  {formErrors.expiryDate && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.expiryDate}</p>
+                  {formErrors.cardNumber && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.cardNumber}</p>
                   )}
                 </div>
                 
                 <div>
-                  <label htmlFor="cvv" className="block text-sm font-medium text-gray-700">
-                    CVV
+                  <label htmlFor="cardHolder" className="block text-sm font-medium text-gray-700">
+                    Cardholder Name
                   </label>
                   <input
                     type="text"
-                    id="cvv"
-                    name="cvv"
-                    placeholder="123"
-                    value={cardDetails.cvv}
+                    id="cardHolder"
+                    name="cardHolder"
+                    placeholder="John Doe"
+                    value={cardDetails.cardHolder}
                     onChange={handleCardDetailsChange}
                     className={`mt-1 block w-full rounded-md shadow-sm ${
-                      formErrors.cvv
+                      formErrors.cardHolder
                         ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                     }`}
                   />
-                  {formErrors.cvv && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.cvv}</p>
+                  {formErrors.cardHolder && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.cardHolder}</p>
                   )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700">
+                      Expiry Date
+                    </label>
+                    <input
+                      type="text"
+                      id="expiryDate"
+                      name="expiryDate"
+                      placeholder="MM/YY"
+                      value={cardDetails.expiryDate}
+                      onChange={handleCardDetailsChange}
+                      className={`mt-1 block w-full rounded-md shadow-sm ${
+                        formErrors.expiryDate
+                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                          : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                      }`}
+                    />
+                    {formErrors.expiryDate && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.expiryDate}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="cvv" className="block text-sm font-medium text-gray-700">
+                      CVV
+                    </label>
+                    <input
+                      type="text"
+                      id="cvv"
+                      name="cvv"
+                      placeholder="123"
+                      value={cardDetails.cvv}
+                      onChange={handleCardDetailsChange}
+                      className={`mt-1 block w-full rounded-md shadow-sm ${
+                        formErrors.cvv
+                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                          : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                      }`}
+                    />
+                    {formErrors.cvv && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.cvv}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-        
-        {/* Emergency buttons for development/debug */}
-        <div className="mt-4">
-          {!shouldShowCardForm && (
+          )}
+          
+          {/* Navigation Buttons */}
+          <div className="flex justify-between pt-4">
             <button
               type="button"
-              onClick={() => {
-                console.log('Force showing credit card form');
-                setForceShowCardForm(true);
-                selectCreditCard();
-              }}
-              className="text-sm text-blue-600 hover:underline"
+              onClick={handleBack}
+              className="px-4 py-2 rounded-md bg-gray-100 text-gray-800 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
             >
-              Show credit card form
+              Back
             </button>
-          )}
-        </div>
-        
-        {/* Enhance the navigation buttons */}
-        <div className="flex flex-col sm:flex-row sm:justify-between pt-6 border-t">
-          <button 
-            type="button" 
-            onClick={handleBack}
-            className="mb-4 sm:mb-0 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Back to Shipping
-          </button>
-          
-          <button
-            type="submit"
-            disabled={localLoading}
-            className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            Continue to Review
-          </button>
-        </div>
-      </form>
+            
+            <button
+              type="submit"
+              className={`px-6 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                loading ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
+              disabled={loading}
+            >
+              {loading ? 'Processing...' : 'Continue to Review'}
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 };
