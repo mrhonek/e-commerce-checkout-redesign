@@ -1,5 +1,31 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+// Add a function to clear any lingering cart data in localStorage
+const clearLocalCartData = () => {
+  // Clear all cart-related items from localStorage
+  const localStorageKeys = Object.keys(localStorage);
+  localStorageKeys.forEach(key => {
+    if (key.startsWith('cart') || key.includes('cart') || key.includes('Cart')) {
+      localStorage.removeItem(key);
+      console.log(`Removed localStorage item: ${key}`);
+    }
+  });
+  
+  // Also clear session storage just in case
+  const sessionStorageKeys = Object.keys(sessionStorage);
+  sessionStorageKeys.forEach(key => {
+    if (key.startsWith('cart') || key.includes('cart') || key.includes('Cart')) {
+      sessionStorage.removeItem(key);
+      console.log(`Removed sessionStorage item: ${key}`);
+    }
+  });
+
+  console.log('All local cart data cleared');
+};
+
+// Execute the clear function when this file is loaded
+clearLocalCartData();
+
 export interface CartItem {
   id: string;
   productId: string;

@@ -84,63 +84,40 @@ const ProductDetails: React.FC = () => {
   const [addedToCart, setAddedToCart] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductDetails = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const productUrl = `${API_BASE_URL}/products/${productId}`;
-        console.log(`[Debug] Fetching product from: ${productUrl}`);
-        
-        const response = await fetch(productUrl);
+        // Fetch from the backend API
+        const response = await fetch(`http://localhost:5000/api/products/${productId}`);
         
         if (!response.ok) {
-          throw new Error('Product not found');
+          throw new Error('Failed to fetch product details');
         }
         
-        const data = await response.json();
+        const productData = await response.json();
+        console.log('Product details fetched from API:', productData);
         
-        // Add debugging to check what fields are available
-        console.log('[Debug] Product data:', data);
-        
-        setProduct(data);
+        setProduct(productData);
+        setError(null);
       } catch (err) {
-        console.error('Error fetching product:', err);
-        setError('Product not found');
+        console.error('Error fetching product details:', err);
+        setError('Failed to load product details. Please try again later.');
         
-        // Fall back to sample data if in development or if using the deployed app
-        const sampleProduct = sampleProducts.find(p => p._id === productId);
-        if (sampleProduct) {
-          console.log('[Debug] Using sample product data:', sampleProduct);
-          setProduct(sampleProduct);
-          setError(null); // Clear error if we found a sample product
+        // Only fall back to sample product if API fetch fails
+        console.warn('Falling back to sample product data due to API error');
+        const fallbackProduct = sampleProducts.find(p => p._id === productId);
+        if (fallbackProduct) {
+          setProduct(fallbackProduct);
         }
       } finally {
         setLoading(false);
       }
     };
-
-    fetchProduct();
-  }, [productId]);
-
-  // For demo purposes, use a placeholder product if API is not available
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && loading) {
-      setTimeout(() => {
-        setProduct({
-          _id: productId || '1',
-          name: 'Premium Wireless Headphones',
-          description: 'Experience premium sound quality with these wireless headphones. Features noise cancellation, 30-hour battery life, and comfortable over-ear design. Perfect for music lovers and professionals alike.',
-          price: 199.99,
-          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80',
-          category: 'Electronics',
-          inStock: true,
-          featured: true,
-          rating: 4.8,
-          reviews: 124
-        });
-        setLoading(false);
-      }, 1000);
+    
+    if (productId) {
+      fetchProductDetails();
     }
-  }, [loading, productId]);
+  }, [productId]);
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setQuantity(parseInt(e.target.value, 10));

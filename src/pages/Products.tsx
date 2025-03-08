@@ -65,38 +65,32 @@ const Products: React.FC = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        logDebug('Fetching products from:', API_ENDPOINT);
-        
-        // Use the hardcoded endpoint
-        const response = await fetch(API_ENDPOINT);
-        
-        logDebug('Response status:', response.status);
+        // Use the actual API endpoint for products
+        const response = await fetch('http://localhost:5000/api/products');
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch products: ${response.status} ${response.statusText}`);
+          throw new Error('Failed to fetch products');
         }
         
-        const text = await response.text();
-        logDebug('Response text:', text.substring(0, 100) + '...');
+        const data = await response.json();
+        console.log('Products fetched from API:', data);
         
-        try {
-          const data = JSON.parse(text);
-          logDebug('Parsed data:', { count: data.length });
-          setProducts(data);
-        } catch (jsonError: unknown) {
-          const errorMessage = jsonError instanceof Error ? jsonError.message : 'Unknown JSON parsing error';
-          throw new Error(`Failed to parse JSON: ${errorMessage}`);
-        }
+        setProducts(data);
+        setError(null);
       } catch (err) {
         console.error('Error fetching products:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch products');
+        setError('Failed to load products. Please try again later.');
+        
+        // Only fall back to sample products if we couldn't fetch from the API
+        console.warn('Falling back to sample products due to API error');
+        setProducts(sampleProducts);
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchProducts();
   }, []);
 
