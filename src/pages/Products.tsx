@@ -3,9 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { Filter, Search, ChevronDown, Star } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 
-// Add an API base URL constant at the top of the file
-// Use the Railway deployment URL instead of localhost
-const API_BASE_URL = 'https://checkout-redesign-backend-production.up.railway.app/api';
+// Update the API base URL constant to use the correct URL
+const API_BASE_URL = 'https://e-commerce-checkout-api-production.up.railway.app/api';
 
 // Debug log function
 const logDebug = (message: string, data?: any) => {
@@ -68,7 +67,7 @@ const Products: React.FC = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        // Use the Railway API endpoint for products
+        // Use the correct Railway API endpoint for products
         const response = await fetch(`${API_BASE_URL}/products`);
         
         if (!response.ok) {

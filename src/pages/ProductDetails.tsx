@@ -6,7 +6,7 @@ import { formatCurrency } from '../utils/formatters';
 import { handleImageError } from '../utils/imageUtils';
 
 // API base URL with explicit /api/ path
-const API_BASE_URL = 'https://checkout-redesign-backend-production.up.railway.app/api';
+const API_BASE_URL = 'https://e-commerce-checkout-api-production.up.railway.app/api';
 
 // Sample products that match the IDs used on the home page
 const sampleProducts = [
@@ -87,7 +87,7 @@ const ProductDetails: React.FC = () => {
     const fetchProductDetails = async () => {
       setLoading(true);
       try {
-        // Fetch from the Railway API
+        // Fetch from the correct Railway API endpoint
         const response = await fetch(`${API_BASE_URL}/products/${productId}`);
         
         if (!response.ok) {
