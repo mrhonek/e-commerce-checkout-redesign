@@ -12,17 +12,34 @@ export const CartPage: React.FC = () => {
 
   // Update item quantity
   const handleQuantityChange = (id: string, quantity: number) => {
-    if (quantity < 1) return;
+    // Return early if quantity is invalid
+    if (quantity <= 0) {
+      console.warn('Attempted to set invalid quantity:', quantity);
+      return;
+    }
+
+    // Set loading state
+    dispatch(setCartLoading(true));
+    
+    // Log what we're doing
+    console.log(`Updating quantity for item ${id} to ${quantity}`);
+    
+    // Dispatch the action
     dispatch(updateCartItemQuantity({ id, quantity }));
+    
+    // Reset loading state after a short delay
+    setTimeout(() => {
+      dispatch(setCartLoading(false));
+    }, 300);
   };
 
   // Remove item from cart
   const handleRemoveItem = (id: string) => {
-    // Log the item being removed
-    console.log('Removing item:', id);
-    
-    // First set cart loading state to true to prevent multiple clicks
+    // Set loading state
     dispatch(setCartLoading(true));
+    
+    // Log what we're doing
+    console.log(`Removing item with ID: ${id}`);
     
     // Dispatch the remove action
     dispatch(removeCartItem(id));
@@ -151,9 +168,11 @@ export const CartPage: React.FC = () => {
                     <div className="flex flex-col sm:flex-row justify-between">
                       <div>
                         <h3 className="font-medium text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-500">
-                          {item.variant && `${item.variant}`}
-                        </p>
+                        {(item as any).variant && (
+                          <p className="text-sm text-gray-500">
+                            {(item as any).variant}
+                          </p>
+                        )}
                       </div>
                       <div className="text-right mt-2 sm:mt-0">
                         <p className="font-medium text-gray-900">${item.price.toFixed(2)}</p>
