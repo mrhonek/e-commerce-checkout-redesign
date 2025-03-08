@@ -1,45 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, TruckIcon, ShieldCheck, Clock, ArrowRight } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { handleImageError } from '../utils/imageUtils';
+import { motion } from 'framer-motion';
 
-// Mock data for featured products
-const featuredProducts = [
-  {
-    id: 1,
-    name: 'Wireless Noise-Cancelling Headphones',
-    price: 249.99,
-    image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-    category: 'Electronics',
-    rating: 4.8,
-  },
-  {
-    id: 2,
-    name: 'Premium Leather Wallet',
-    price: 79.99,
-    image: 'https://images.unsplash.com/photo-1517254797898-04edd251bfb3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80',
-    category: 'Accessories',
-    rating: 4.6,
-  },
-  {
-    id: 3,
-    name: 'Stainless Steel Water Bottle',
-    price: 34.99,
-    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
-    category: 'Home & Kitchen',
-    rating: 4.5,
-  },
-  {
-    id: 4,
-    name: 'Cotton T-Shirt',
-    price: 24.99,
-    image: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dCUyMHNoaXJ0fGVufDB8fDB8fHww&auto=format&fit=crop&w=600&q=60',
-    category: 'Clothing',
-    rating: 4.3,
-  }
-];
+// API base URL for backend
+const API_BASE_URL = 'https://e-commerce-checkout-api-production.up.railway.app/api';
+
+// Define product interface
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  images: string[];
+  category: string;
+  isInStock: boolean;
+  isFeatured: boolean;
+  slug: string;
+}
 
 // Mock data for categories
 const categories = [
@@ -65,7 +46,86 @@ const categories = [
   }
 ];
 
-export const Home: React.FC = () => {
+const Home: React.FC = () => {
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch featured products from API
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE_URL}/products`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        
+        const products = await response.json();
+        
+        // Filter for featured products
+        const featured = products.filter((product: Product) => product.isFeatured);
+        console.log('Fetched featured products:', featured);
+        
+        setFeaturedProducts(featured);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching featured products:', err);
+        setError('Failed to load featured products');
+        // Fall back to empty array
+        setFeaturedProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchFeaturedProducts();
+  }, []);
+  
+  // Render featured products using the real MongoDB _id values
+  const renderFeaturedProducts = () => {
+    if (loading) {
+      return <div className="text-center py-8">Loading featured products...</div>;
+    }
+    
+    if (error) {
+      return <div className="text-center text-red-500 py-8">{error}</div>;
+    }
+    
+    if (featuredProducts.length === 0) {
+      return <div className="text-center py-8">No featured products available at this time.</div>;
+    }
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {featuredProducts.map((product) => (
+          <Link 
+            to={`/products/${product._id}`} 
+            key={product._id} 
+            className="group"
+          >
+            <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:-translate-y-1">
+              <img 
+                src={product.images?.[0] || '/placeholder-product.jpg'} 
+                alt={product.name} 
+                className="w-full h-64 object-cover"
+              />
+              <div className="p-4">
+                <h3 className="text-xl font-semibold mb-2 group-hover:text-indigo-600">{product.name}</h3>
+                <p className="text-gray-600 mb-3 line-clamp-2">{product.description}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold">${product.price.toFixed(2)}</span>
+                  <span className="text-sm text-indigo-600 font-medium">View Details</span>
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -148,35 +208,7 @@ export const Home: React.FC = () => {
                 View All <ArrowRight size={16} className="ml-1" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {featuredProducts.map((product) => (
-                <Link to={`/product/${product.id}`} key={product.id} className="group">
-                  <div className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-                    <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={handleImageError}
-                      />
-                    </div>
-                    <div className="p-4">
-                      <div className="text-sm text-gray-500 mb-1">{product.category}</div>
-                      <h3 className="font-semibold text-lg mb-2 group-hover:text-blue-600 transition-colors">
-                        {product.name}
-                      </h3>
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold">${product.price.toFixed(2)}</span>
-                        <div className="text-yellow-400 text-sm">
-                          {'★'.repeat(Math.round(product.rating))}
-                          <span className="text-gray-400 ml-1">({product.rating})</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            {renderFeaturedProducts()}
           </div>
         </section>
 
@@ -269,4 +301,4 @@ export const Home: React.FC = () => {
   );
 };
 
-export default Home; 
+export { Home }; 

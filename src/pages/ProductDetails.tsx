@@ -87,13 +87,45 @@ const ProductDetails: React.FC = () => {
     const fetchProductDetails = async () => {
       setLoading(true);
       try {
-        // Fetch from the correct Railway API endpoint
-        const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+        // First, try to fetch by ID/productId directly
+        console.log(`Attempting to fetch product with ID: ${productId}`);
+        let response = await fetch(`${API_BASE_URL}/products/${productId}`);
         
+        // If that fails, try to fetch from all products and find matching one
         if (!response.ok) {
-          throw new Error('Failed to fetch product details');
+          console.log('Direct fetch failed, trying to find product in all products');
+          
+          // Fetch all products
+          response = await fetch(`${API_BASE_URL}/products`);
+          
+          if (!response.ok) {
+            throw new Error('Failed to fetch products');
+          }
+          
+          const allProducts = await response.json();
+          console.log(`Fetched ${allProducts.length} products, looking for match to ID: ${productId}`);
+          
+          // Try to find a product with matching ID in various formats
+          const matchedProduct = allProducts.find((p: any) => 
+            p._id === productId ||                // Exact MongoDB ID match
+            p.id === productId ||                 // Direct ID match
+            (p._id && productId && p._id.toString().endsWith(productId)) || // ID is suffix of MongoDB ID
+            p.slug === productId ||              // Match by slug
+            (productId && !isNaN(parseInt(productId)) && p.id === parseInt(productId)) // Parse numeric ID
+          );
+          
+          if (matchedProduct) {
+            console.log('Found matching product:', matchedProduct);
+            setProduct(matchedProduct);
+            setError(null);
+            setLoading(false);
+            return;
+          } else {
+            throw new Error('Product not found in catalog');
+          }
         }
         
+        // If direct fetch worked, use that result
         const productData = await response.json();
         console.log('Product details fetched from API:', productData);
         
@@ -103,23 +135,24 @@ const ProductDetails: React.FC = () => {
         console.error('Error fetching product details:', err);
         setError('Failed to load product details. Please try again later.');
         
-        // Only fall back to sample product if API fetch fails
-        console.warn('Falling back to sample product data due to API error');
-        // Create a fallback product directly here instead of depending on sampleProducts
-        const fallbackProduct = {
-          _id: productId || '1',
-          name: 'Premium Wireless Headphones',
-          description: 'Experience premium sound quality with these wireless headphones. Features noise cancellation, 30-hour battery life, and comfortable over-ear design.',
-          price: 199.99,
-          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
-          category: 'Electronics',
-          inStock: true,
-          featured: true,
-          rating: 4.8,
-          reviews: 124
-        };
-        
-        setProduct(fallbackProduct);
+        // Fall back to sample product data in development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Falling back to sample product data due to API error');
+          const fallbackProduct = {
+            _id: productId || '1',
+            name: 'Product Not Found',
+            description: 'Sorry, we couldn\'t find the product you\'re looking for. Please try another product or contact customer support.',
+            price: 0,
+            image: 'https://via.placeholder.com/400x300?text=Product+Not+Found',
+            category: 'unknown',
+            inStock: false,
+            featured: false,
+            rating: 0,
+            reviews: 0
+          };
+          
+          setProduct(fallbackProduct);
+        }
       } finally {
         setLoading(false);
       }
