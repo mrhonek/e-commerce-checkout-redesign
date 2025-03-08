@@ -3,8 +3,9 @@ import { Link, useParams } from 'react-router-dom';
 import { Filter, Search, ChevronDown, Star } from 'lucide-react';
 import { formatCurrency } from '../utils/formatters';
 
-// Hardcode the complete API endpoint for now to ensure it's correct
-const API_ENDPOINT = 'https://e-commerce-checkout-api-production.up.railway.app/api/products';
+// Add an API base URL constant at the top of the file
+// Use the Railway deployment URL instead of localhost
+const API_BASE_URL = 'https://checkout-redesign-backend-production.up.railway.app/api';
 
 // Debug log function
 const logDebug = (message: string, data?: any) => {
@@ -67,8 +68,8 @@ const Products: React.FC = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        // Use the actual API endpoint for products
-        const response = await fetch('http://localhost:5000/api/products');
+        // Use the Railway API endpoint for products
+        const response = await fetch(`${API_BASE_URL}/products`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch products');
@@ -83,9 +84,36 @@ const Products: React.FC = () => {
         console.error('Error fetching products:', err);
         setError('Failed to load products. Please try again later.');
         
-        // Only fall back to sample products if we couldn't fetch from the API
+        // Instead of using a separate sample products variable, let's create one here
+        const fallbackProducts = [
+          {
+            _id: '1',
+            name: 'Wireless Headphones',
+            description: 'Premium wireless headphones with noise cancellation.',
+            price: 129.99,
+            image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
+            category: 'Electronics',
+            inStock: true,
+            featured: true,
+            rating: 4.5,
+            reviews: 120
+          },
+          {
+            _id: '2',
+            name: 'Smart Watch',
+            description: 'Track your fitness and stay connected with this smartwatch.',
+            price: 199.99,
+            image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500',
+            category: 'Electronics',
+            inStock: true,
+            featured: true,
+            rating: 4.8,
+            reviews: 95
+          }
+        ];
+        
         console.warn('Falling back to sample products due to API error');
-        setProducts(sampleProducts);
+        setProducts(fallbackProducts);
       } finally {
         setLoading(false);
       }

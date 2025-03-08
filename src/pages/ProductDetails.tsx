@@ -6,7 +6,7 @@ import { formatCurrency } from '../utils/formatters';
 import { handleImageError } from '../utils/imageUtils';
 
 // API base URL with explicit /api/ path
-const API_BASE_URL = 'https://e-commerce-checkout-api-production.up.railway.app/api';
+const API_BASE_URL = 'https://checkout-redesign-backend-production.up.railway.app/api';
 
 // Sample products that match the IDs used on the home page
 const sampleProducts = [
@@ -87,8 +87,8 @@ const ProductDetails: React.FC = () => {
     const fetchProductDetails = async () => {
       setLoading(true);
       try {
-        // Fetch from the backend API
-        const response = await fetch(`http://localhost:5000/api/products/${productId}`);
+        // Fetch from the Railway API
+        const response = await fetch(`${API_BASE_URL}/products/${productId}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch product details');
@@ -105,10 +105,21 @@ const ProductDetails: React.FC = () => {
         
         // Only fall back to sample product if API fetch fails
         console.warn('Falling back to sample product data due to API error');
-        const fallbackProduct = sampleProducts.find(p => p._id === productId);
-        if (fallbackProduct) {
-          setProduct(fallbackProduct);
-        }
+        // Create a fallback product directly here instead of depending on sampleProducts
+        const fallbackProduct = {
+          _id: productId || '1',
+          name: 'Premium Wireless Headphones',
+          description: 'Experience premium sound quality with these wireless headphones. Features noise cancellation, 30-hour battery life, and comfortable over-ear design.',
+          price: 199.99,
+          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
+          category: 'Electronics',
+          inStock: true,
+          featured: true,
+          rating: 4.8,
+          reviews: 124
+        };
+        
+        setProduct(fallbackProduct);
       } finally {
         setLoading(false);
       }
