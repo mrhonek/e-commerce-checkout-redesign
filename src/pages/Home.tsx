@@ -12,13 +12,15 @@ const API_BASE_URL = 'https://e-commerce-checkout-api-production.up.railway.app/
 // Define product interface
 interface Product {
   _id: string;
+  id?: string; // Add optional id field to handle different API responses
   name: string;
   description: string;
   price: number;
   images: string[];
   category: string;
   isInStock: boolean;
-  isFeatured: boolean;
+  isFeatured?: boolean;
+  is_featured?: boolean; // Alternative property name
   slug: string;
 }
 
@@ -56,24 +58,47 @@ const Home: React.FC = () => {
     const fetchFeaturedProducts = async () => {
       try {
         setLoading(true);
+        console.log('Fetching products from:', API_BASE_URL);
+        
         const response = await fetch(`${API_BASE_URL}/products`);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch products');
+          throw new Error(`Failed to fetch products: ${response.status}`);
         }
         
         const products = await response.json();
+        console.log('Fetched products from API:', products);
+        console.log('Products data structure:', JSON.stringify(products[0], null, 2));
         
-        // Filter for featured products
-        const featured = products.filter((product: Product) => product.isFeatured);
-        console.log('Fetched featured products:', featured);
+        // Filter for featured products - handle different property names
+        const featured = products.filter((product: any) => {
+          // Check all possible property names for featured flag
+          const isFeatured = 
+            product.isFeatured === true || 
+            product.is_featured === true ||
+            product.featured === true;
+          
+          if (isFeatured) {
+            console.log('Found featured product:', product);
+          }
+          
+          return isFeatured;
+        });
         
-        setFeaturedProducts(featured);
-        setError(null);
+        console.log(`Found ${featured.length} featured products:`, featured);
+        
+        if (featured.length === 0) {
+          console.warn('No featured products found in database. Please ensure some products have isFeatured set to true.');
+          // Fallback to first 3 products only if none are marked as featured
+          setFeaturedProducts(products.slice(0, 3));
+          setError('No featured products found. Showing random products instead.');
+        } else {
+          setFeaturedProducts(featured);
+          setError(null);
+        }
       } catch (err) {
         console.error('Error fetching featured products:', err);
         setError('Failed to load featured products');
-        // Fall back to empty array
         setFeaturedProducts([]);
       } finally {
         setLoading(false);
@@ -100,10 +125,16 @@ const Home: React.FC = () => {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {featuredProducts.map((product) => (
-          <Link 
-            to={`/products/${product._id}`} 
-            key={product._id} 
+          <Link
+            to={`/products/${product._id || product.id || product.slug || 'product-not-found'}`}
+            key={product._id || product.id || 'product-' + Math.random()}
             className="group"
+            onClick={() => {
+              console.log('Featured product clicked:', product);
+              if (!product._id) {
+                console.warn('Featured product missing _id:', product);
+              }
+            }}
           >
             <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:-translate-y-1">
               <img 

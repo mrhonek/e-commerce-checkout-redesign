@@ -23,6 +23,7 @@ interface Product {
   featured: boolean;
   rating: number;
   reviews: number;
+  slug?: string; // Add optional slug property
 }
 
 type SortOption = 'featured' | 'price-low' | 'price-high' | 'rating' | 'newest';
@@ -77,12 +78,20 @@ const Products: React.FC = () => {
         const data = await response.json();
         console.log('Products fetched from API:', data);
         
+        // Log details about featured items
+        const featuredProducts = data.filter((p: any) => 
+          p.isFeatured === true || p.is_featured === true || p.featured === true
+        );
+        console.log(`Found ${featuredProducts.length} featured products in API response:`, featuredProducts);
+        
         setProducts(data);
         setError(null);
       } catch (err) {
         console.error('Error fetching products:', err);
         setError('Failed to load products. Please try again later.');
         
+        // Use fallback products only if API fails
+        console.log('Using fallback products due to API error');
         // Instead of using a separate sample products variable, let's create one here
         const fallbackProducts = [
           {
@@ -120,92 +129,6 @@ const Products: React.FC = () => {
     
     fetchProducts();
   }, []);
-
-  // For demo purposes, use placeholder products if API is not available
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && loading) {
-      setTimeout(() => {
-        // Sample product data
-        const sampleProducts: Product[] = [
-          {
-            _id: '1',
-            name: 'Wireless Headphones',
-            description: 'Premium noise-cancelling wireless headphones with long battery life.',
-            price: 199.99,
-            image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80',
-            category: 'Electronics',
-            inStock: true,
-            featured: true,
-            rating: 4.8,
-            reviews: 124
-          },
-          {
-            _id: '2',
-            name: 'Smart Watch',
-            description: 'Track your fitness and stay connected with this premium smart watch.',
-            price: 249.99,
-            image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=764&q=80',
-            category: 'Electronics',
-            inStock: true,
-            featured: false,
-            rating: 4.5,
-            reviews: 89
-          },
-          {
-            _id: '3',
-            name: 'Ergonomic Chair',
-            description: 'Comfortable office chair with ergonomic design for long working hours.',
-            price: 349.99,
-            image: 'https://images.unsplash.com/photo-1505843513577-22bb7d21e455?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1332&q=80',
-            category: 'Furniture',
-            inStock: true,
-            featured: true,
-            rating: 4.7,
-            reviews: 56
-          },
-          {
-            _id: '4',
-            name: 'Coffee Maker',
-            description: 'Automatic coffee maker with timer and multiple brew settings.',
-            price: 129.99,
-            image: 'https://images.unsplash.com/photo-1585577490058-1a72f9c66bde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80',
-            category: 'Kitchen',
-            inStock: false,
-            featured: false,
-            rating: 4.2,
-            reviews: 42
-          },
-          {
-            _id: '5',
-            name: 'Winter Jacket',
-            description: 'Warm and stylish winter jacket with water-resistant exterior.',
-            price: 189.99,
-            image: 'https://images.unsplash.com/photo-1604644401890-0bd678c83788?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80',
-            category: 'Clothing',
-            inStock: true,
-            featured: false,
-            rating: 4.6,
-            reviews: 78
-          },
-          {
-            _id: '6',
-            name: 'Smartphone',
-            description: 'Latest model smartphone with high-resolution camera and fast processor.',
-            price: 899.99,
-            image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2327&q=80',
-            category: 'Electronics',
-            inStock: true,
-            featured: true,
-            rating: 4.9,
-            reviews: 212
-          }
-        ];
-        
-        setProducts(sampleProducts);
-        setLoading(false);
-      }, 1000);
-    }
-  }, [loading]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -431,7 +354,17 @@ const Products: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sortedProducts.map((product) => (
             <div key={product._id || product.id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-              <Link to={`/products/${product._id}`} className="block">
+              <Link 
+                to={`/products/${product._id || product.id || product.slug || 'product-not-found'}`}
+                className="block"
+                onClick={(e) => {
+                  // Add debug logging for product link
+                  console.log('Product link clicked:', product);
+                  if (!product._id) {
+                    console.warn('Product missing _id:', product);
+                  }
+                }}
+              >
                 <div className="relative pb-[60%] overflow-hidden">
                   <img 
                     src={product.image} 

@@ -72,6 +72,7 @@ interface Product {
   featured: boolean;
   rating: number;
   reviews: number;
+  slug?: string; // Add optional slug property
 }
 
 const ProductDetails: React.FC = () => {
