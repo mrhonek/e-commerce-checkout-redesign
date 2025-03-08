@@ -160,23 +160,39 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const removeFromCart = async (itemId: string) => {
     try {
       setLoading(true);
+      
+      // First update the local state to give immediate feedback
+      const updatedItems = cart.items.filter(item => item.id !== itemId);
+      const isEmpty = updatedItems.length === 0;
+      
+      // Update local cart state with filtered items
+      setCart(prev => ({
+        ...prev,
+        items: updatedItems,
+        totalItems: updatedItems.reduce((count, item) => count + item.quantity, 0),
+        subtotal: updatedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+        isEmpty: isEmpty // Explicitly set isEmpty based on items array length
+      }));
+      
+      // Make the API call to reflect changes on the server
       const response = await endpoints.cart.remove(itemId);
       
+      // Process the server response
       const cartData = response.data;
-      
-      // Process images to handle placeholders
       const processedItems = processCartItems(cartData.items);
-      
       const totals = calculateCartTotals(processedItems);
       
+      // Update with server response
       setCart({
-        items: processedItems.map((item: { id?: string; _id?: string; productId?: string }) => ({
+        items: processedItems.map((item: any) => ({
           ...item,
-          id: item.id || item._id || `item-${Date.now()}`, // Ensure we always have an id
-          productId: item.productId || '' // Ensure we always have a productId (even if empty)
+          id: item.id || item._id || `item-${Date.now()}`,
+          productId: item.productId || ''
         })),
-        ...totals
+        ...totals,
+        isEmpty: processedItems.length === 0 // Ensure isEmpty is set correctly based on server response
       });
+      
       setError(null);
     } catch (err) {
       console.error('Error removing from cart:', err);

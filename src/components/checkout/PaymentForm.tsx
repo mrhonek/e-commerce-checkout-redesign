@@ -68,23 +68,21 @@ const PaymentForm: React.FC = () => {
 
   // Add better rendering and forced selection for credit card
   useEffect(() => {
-    // Auto-select credit card if no payment method is selected
+    // When payment methods are loaded but no method is selected,
+    // automatically select credit card as default
     if (state.paymentMethods.length > 0 && !state.selectedPaymentMethod) {
       const creditCard = state.paymentMethods.find(m => 
-        m.type === 'credit_card' || m._id === 'credit_card'
+        m.type === 'credit_card' || 
+        m._id === 'credit_card' ||
+        (m.name && m.name.toLowerCase().includes('card'))
       );
       
       if (creditCard) {
         selectPaymentMethod(creditCard);
-        // Force show card form when auto-selecting credit card
-        setForceShowCardForm(true);
+      } else {
+        // If no credit card option is found, select the first payment method
+        selectPaymentMethod(state.paymentMethods[0]);
       }
-    }
-    
-    // Show card form if credit card is selected
-    if (state.selectedPaymentMethod?.type === 'credit_card' || 
-        state.selectedPaymentMethod?._id === 'credit_card') {
-      setForceShowCardForm(true);
     }
   }, [state.paymentMethods, state.selectedPaymentMethod, selectPaymentMethod]);
 
@@ -358,55 +356,39 @@ const PaymentForm: React.FC = () => {
       ) : (
         <form onSubmit={handleSubmit} noValidate>
           {/* Payment Methods - Make the entire div more obviously clickable */}
-          <div className="mb-8">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Select Payment Method</h3>
-            
-            <div className="space-y-4">
-              {state.paymentMethods.map((method) => {
-                const isSelected = state.selectedPaymentMethod?._id === method._id;
-                const isCreditCard = method.type === 'credit_card' || 
-                                    method._id === 'credit_card' || 
-                                    (method.name && method.name.toLowerCase().includes('card'));
-                
-                return (
-                  <div 
-                    key={method._id} 
-                    className={`flex items-center p-4 border rounded cursor-pointer transition-colors
-                      ${isSelected 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-200 hover:bg-gray-50'}`}
-                    onClick={() => handlePaymentMethodChange(method)}
-                  >
-                    {/* Selected/unselected indicator */}
-                    <div className="relative flex items-center justify-center mr-3">
-                      {isSelected ? (
-                        <CheckCircle className="w-5 h-5 text-blue-600" />
-                      ) : (
-                        <Circle className="w-5 h-5 text-gray-300" />
-                      )}
-                    </div>
-                    
-                    {/* Payment method icon and details */}
-                    <div className="flex items-center flex-grow">
-                      {isCreditCard ? (
-                        <CreditCard className={`h-6 w-6 mr-2 ${isSelected ? 'text-blue-500' : 'text-gray-400'}`} />
-                      ) : (
-                        <Check className={`h-6 w-6 mr-2 ${isSelected ? 'text-green-500' : 'text-gray-400'}`} />
-                      )}
-                      <div>
-                        <div className="font-medium">{method.name}</div>
-                        {method.description && (
-                          <div className="text-sm text-gray-500">{method.description}</div>
-                        )}
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-3">Payment Method</h3>
+            <div className="space-y-3">
+              {state.paymentMethods.map((method) => (
+                <div
+                  key={method._id}
+                  className={`border rounded-lg p-4 cursor-pointer ${
+                    state.selectedPaymentMethod?._id === method._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                  }`}
+                  onClick={() => selectPaymentMethod(method)}
+                >
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      id={`payment-${method._id}`}
+                      name="paymentMethod"
+                      checked={state.selectedPaymentMethod?._id === method._id}
+                      onChange={() => selectPaymentMethod(method)}
+                      className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label htmlFor={`payment-${method._id}`} className="flex-grow font-medium">
+                      {method.name}
+                    </label>
+                    {method.type === 'credit_card' && (
+                      <div className="flex space-x-2">
+                        <img src="/images/visa.svg" alt="Visa" className="h-6" />
+                        <img src="/images/mastercard.svg" alt="Mastercard" className="h-6" />
+                        <img src="/images/amex.svg" alt="American Express" className="h-6" />
                       </div>
-                    </div>
+                    )}
                   </div>
-                );
-              })}
-              
-              {formErrors.paymentMethod && (
-                <p className="text-sm text-red-600 mt-1">{formErrors.paymentMethod}</p>
-              )}
+                </div>
+              ))}
             </div>
           </div>
           
