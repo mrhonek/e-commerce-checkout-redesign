@@ -431,7 +431,7 @@ const Products: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sortedProducts.map((product) => (
             <div key={product._id || product.id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
-              <Link to={`/products/${product._id || product.id}`} className="block">
+              <Link to={`/products/${product._id}`} className="block">
                 <div className="relative pb-[60%] overflow-hidden">
                   <img 
                     src={product.image} 
