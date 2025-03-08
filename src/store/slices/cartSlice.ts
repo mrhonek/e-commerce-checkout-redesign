@@ -57,41 +57,65 @@ export const cartSlice = createSlice({
   initialState,
   reducers: {
     setCartItems: (state, action: PayloadAction<CartItem[]>) => {
-      state.items = action.payload;
-      state.summary = calculateSummary(action.payload);
-      state.isEmpty = action.payload.length === 0;
+      state.items = [...action.payload];
+      state.summary = calculateSummary(state.items);
+      state.isEmpty = state.items.length === 0;
     },
     addCartItem: (state, action: PayloadAction<CartItem>) => {
-      const existingItem = state.items.find(item => item.productId === action.payload.productId);
-      
-      if (existingItem) {
-        existingItem.quantity += action.payload.quantity;
+      const existingItemIndex = state.items.findIndex(item => 
+        item.productId === action.payload.productId
+      );
+
+      if (existingItemIndex >= 0) {
+        const updatedItems = [...state.items];
+        updatedItems[existingItemIndex] = {
+          ...updatedItems[existingItemIndex],
+          quantity: updatedItems[existingItemIndex].quantity + action.payload.quantity
+        };
+        state.items = updatedItems;
       } else {
-        state.items.push(action.payload);
+        state.items = [...state.items, {
+          ...action.payload,
+          id: action.payload.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        }];
       }
-      
+
       state.summary = calculateSummary(state.items);
       state.isEmpty = false;
+      
+      console.log('Item added, current items:', JSON.stringify(state.items));
     },
     updateCartItemQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
       const { id, quantity } = action.payload;
-      const item = state.items.find(item => item.id === id);
       
-      if (item) {
-        item.quantity = quantity;
-        state.summary = calculateSummary(state.items);
-      }
-    },
-    removeCartItem: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter(item => item.id !== action.payload);
+      const updatedItems = state.items.map(item => 
+        item.id === id ? { ...item, quantity } : item
+      );
+      
+      state.items = updatedItems;
       state.summary = calculateSummary(state.items);
       state.isEmpty = state.items.length === 0;
-      console.log('Item removed, remaining items:', state.items.length);
+      
+      console.log(`Item ${id} quantity updated to ${quantity}, current items:`, JSON.stringify(state.items));
+    },
+    removeCartItem: (state, action: PayloadAction<string>) => {
+      const idToRemove = action.payload;
+      
+      const updatedItems = state.items.filter(item => item.id !== idToRemove);
+      
+      state.items = updatedItems;
+      state.summary = calculateSummary(updatedItems);
+      state.isEmpty = updatedItems.length === 0;
+      
+      console.log(`Item ${idToRemove} removed, remaining items: ${updatedItems.length}`, 
+        updatedItems.map(i => `${i.id}: ${i.name} (${i.quantity})`));
     },
     clearCart: (state) => {
       state.items = [];
       state.summary = calculateSummary([]);
       state.isEmpty = true;
+      
+      console.log('Cart cleared');
     },
     setCartLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;

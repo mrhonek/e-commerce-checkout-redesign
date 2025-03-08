@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../store/hooks';
-import { updateCartItemQuantity, removeCartItem, CartItem, CartSummary } from '../../store/slices/cartSlice';
+import { updateCartItemQuantity, removeCartItem, CartItem, CartSummary, setCartLoading } from '../../store/slices/cartSlice';
 import { motion } from 'framer-motion';
 
 export const CartPage: React.FC = () => {
@@ -18,7 +18,19 @@ export const CartPage: React.FC = () => {
 
   // Remove item from cart
   const handleRemoveItem = (id: string) => {
+    // Log the item being removed
+    console.log('Removing item:', id);
+    
+    // First set cart loading state to true to prevent multiple clicks
+    dispatch(setCartLoading(true));
+    
+    // Dispatch the remove action
     dispatch(removeCartItem(id));
+    
+    // Reset loading state after a short delay
+    setTimeout(() => {
+      dispatch(setCartLoading(false));
+    }, 300);
   };
 
   // Animation variants
@@ -122,70 +134,64 @@ export const CartPage: React.FC = () => {
             animate="visible"
           >
             {/* Cart items */}
-            <div className="border-t border-b border-gray-200 divide-y divide-gray-200">
+            <div className="space-y-6">
               {items.map((item) => (
-                <motion.div 
-                  key={item.id} 
-                  className="py-6 sm:flex"
-                  variants={itemVariants}
-                >
-                  <div className="flex-shrink-0 w-24 h-24 bg-gray-200 rounded-md overflow-hidden sm:w-32 sm:h-32 mx-auto sm:mx-0">
-                    <img
-                      src={item.image || 'https://via.placeholder.com/150'}
-                      alt={item.name}
-                      className="w-full h-full object-center object-cover"
+                <div key={item.id} className="flex flex-col sm:flex-row border-b pb-6">
+                  {/* Item image */}
+                  <div className="w-full sm:w-24 h-24 mb-4 sm:mb-0 mr-0 sm:mr-4">
+                    <img 
+                      src={item.image || '/placeholder-product.jpg'} 
+                      alt={item.name} 
+                      className="h-full w-full object-cover rounded"
                     />
                   </div>
-
-                  <div className="mt-4 sm:mt-0 sm:ml-6 flex-1">
-                    <div className="flex flex-col sm:flex-row sm:justify-between">
-                      <h2 className="text-lg font-medium text-gray-900 text-center sm:text-left">
-                        {item.name}
-                      </h2>
-                      <p className="text-lg font-medium text-gray-900 text-center sm:text-right mt-2 sm:mt-0">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </p>
+                  
+                  {/* Item details */}
+                  <div className="flex-grow">
+                    <div className="flex flex-col sm:flex-row justify-between">
+                      <div>
+                        <h3 className="font-medium text-gray-900">{item.name}</h3>
+                        <p className="text-sm text-gray-500">
+                          {item.variant && `${item.variant}`}
+                        </p>
+                      </div>
+                      <div className="text-right mt-2 sm:mt-0">
+                        <p className="font-medium text-gray-900">${item.price.toFixed(2)}</p>
+                      </div>
                     </div>
-                    <p className="mt-1 text-sm text-gray-500 text-center sm:text-left">${item.price.toFixed(2)} each</p>
                     
-                    <div className="mt-4 flex flex-col sm:flex-row items-center justify-between sm:justify-start gap-4">
-                      <div className="flex items-center border border-gray-300 rounded-md">
-                        <button
+                    {/* Quantity and remove controls */}
+                    <div className="flex items-center justify-between mt-4">
+                      <div className="flex items-center border rounded">
+                        <button 
                           type="button"
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
-                          className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50"
-                          aria-label="Decrease quantity"
+                          className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900"
+                          onClick={() => handleQuantityChange(item.id, Math.max(1, item.quantity - 1))}
+                          disabled={loading}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                          </svg>
+                          -
                         </button>
-                        <span className="px-4 py-2 text-gray-700">{item.quantity}</span>
-                        <button
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <button 
                           type="button"
+                          className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-900"
                           onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                          className="p-2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                          aria-label="Increase quantity"
+                          disabled={loading}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                          </svg>
+                          +
                         </button>
                       </div>
-                      <button
+                      <button 
                         type="button"
+                        className="text-sm text-red-600 hover:text-red-900"
                         onClick={() => handleRemoveItem(item.id)}
-                        className="text-indigo-600 hover:text-indigo-500 focus:outline-none flex items-center"
+                        disabled={loading}
                       >
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
                         Remove
                       </button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
 
