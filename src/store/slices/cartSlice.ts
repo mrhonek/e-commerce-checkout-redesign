@@ -21,6 +21,7 @@ interface CartState {
   summary: CartSummary;
   loading: boolean;
   error: string | null;
+  isEmpty: boolean;
 }
 
 const initialState: CartState = {
@@ -32,7 +33,8 @@ const initialState: CartState = {
     total: 0
   },
   loading: false,
-  error: null
+  error: null,
+  isEmpty: true
 };
 
 // Helper function to recalculate summary
@@ -57,6 +59,7 @@ export const cartSlice = createSlice({
     setCartItems: (state, action: PayloadAction<CartItem[]>) => {
       state.items = action.payload;
       state.summary = calculateSummary(action.payload);
+      state.isEmpty = action.payload.length === 0;
     },
     addCartItem: (state, action: PayloadAction<CartItem>) => {
       const existingItem = state.items.find(item => item.productId === action.payload.productId);
@@ -68,6 +71,7 @@ export const cartSlice = createSlice({
       }
       
       state.summary = calculateSummary(state.items);
+      state.isEmpty = false;
     },
     updateCartItemQuantity: (state, action: PayloadAction<{ id: string; quantity: number }>) => {
       const { id, quantity } = action.payload;
@@ -81,10 +85,13 @@ export const cartSlice = createSlice({
     removeCartItem: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter(item => item.id !== action.payload);
       state.summary = calculateSummary(state.items);
+      state.isEmpty = state.items.length === 0;
+      console.log('Item removed, remaining items:', state.items.length);
     },
     clearCart: (state) => {
       state.items = [];
       state.summary = calculateSummary([]);
+      state.isEmpty = true;
     },
     setCartLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;

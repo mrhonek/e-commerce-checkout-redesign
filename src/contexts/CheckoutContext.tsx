@@ -316,74 +316,101 @@ export const CheckoutProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Fetch payment methods
   const fetchPaymentMethods = async (): Promise<PaymentMethod[]> => {
-    // If payment methods already exist, don't fetch again
-    if (state.paymentMethods.length > 0) {
-      return state.paymentMethods;
-    }
-    
     try {
-      setLoading(true);
-      setError(null);
-      
-      // Add timeout to prevent hanging if API doesn't respond
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
-      
-      const response = await endpoints.payment.getMethods();
-      
-      clearTimeout(timeoutId);
-      
-      // Provide default options if none are returned
-      if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
-        const defaultPaymentMethods: PaymentMethod[] = [
-          {
-            _id: 'credit_card',
-            type: 'credit_card' as 'credit_card',
-            name: 'Credit / Debit Card',
-            description: 'Pay securely with your card'
-          },
-          {
-            _id: 'paypal',
-            type: 'paypal' as 'paypal',
-            name: 'PayPal',
-            description: 'Fast and secure checkout with PayPal'
-          }
-        ];
-        dispatch({ type: 'SET_PAYMENT_METHODS', payload: defaultPaymentMethods });
-        return defaultPaymentMethods;
+      // First check if we already have payment methods
+      if (state.paymentMethods.length > 0) {
+        // If we have methods, make sure credit card is first in the list
+        const methods = [...state.paymentMethods];
+        const creditCardIndex = methods.findIndex(m => 
+          m.type === 'credit_card' || 
+          m._id === 'credit_card' || 
+          (m.name && m.name.toLowerCase().includes('card'))
+        );
+        
+        // If credit card exists but is not the first item, move it to the front
+        if (creditCardIndex > 0) {
+          const creditCard = methods[creditCardIndex];
+          methods.splice(creditCardIndex, 1); // Remove from current position
+          methods.unshift(creditCard); // Add to the beginning
+          
+          // Update state with reordered methods
+          dispatch({ type: 'SET_PAYMENT_METHODS', payload: methods });
+        }
+        
+        return methods;
       }
       
-      // Make sure returned data has correct types
-      const validatedPaymentMethods: PaymentMethod[] = response.data.map(method => ({
-        ...method,
-        type: method.type === 'credit_card' ? 'credit_card' : 'paypal'
-      }));
+      // If we don't have methods yet, try to fetch from API
+      try {
+        setLoading(true);
+        const response = await endpoints.payment.getMethods();
+        setLoading(false);
+        
+        if (response.status === 200 && response.data && Array.isArray(response.data)) {
+          // Validate and transform the API data
+          const validatedPaymentMethods: PaymentMethod[] = response.data.map(method => ({
+            _id: method._id || method.id || `method-${Date.now()}`,
+            name: method.name || 'Unknown Payment Method',
+            type: method.type || 'unknown',
+            description: method.description || ''
+          }));
+          
+          // Sort payment methods so credit card is first
+          validatedPaymentMethods.sort((a, b) => {
+            // Credit card should come first
+            if (a.type === 'credit_card' || a.name.toLowerCase().includes('card')) return -1;
+            if (b.type === 'credit_card' || b.name.toLowerCase().includes('card')) return 1;
+            return 0;
+          });
+          
+          dispatch({ type: 'SET_PAYMENT_METHODS', payload: validatedPaymentMethods });
+          return validatedPaymentMethods;
+        }
+      } catch (error) {
+        console.error('Error fetching payment methods:', error);
+        setError('Failed to load payment methods');
+      }
       
-      dispatch({ type: 'SET_PAYMENT_METHODS', payload: validatedPaymentMethods });
-      return validatedPaymentMethods;
-    } catch (err) {
-      console.error('Error fetching payment methods:', err);
-      setError('Failed to load payment methods');
-      
-      // Provide default payment methods on error
+      // Fallback to default payment methods
       const defaultPaymentMethods: PaymentMethod[] = [
         {
           _id: 'credit_card',
-          type: 'credit_card' as 'credit_card',
-          name: 'Credit / Debit Card',
-          description: 'Pay securely with your card'
+          name: 'Credit Card',
+          type: 'credit_card',
+          description: 'Pay with Visa, Mastercard, or American Express'
         },
         {
           _id: 'paypal',
-          type: 'paypal' as 'paypal',
           name: 'PayPal',
-          description: 'Fast and secure checkout with PayPal'
+          type: 'paypal',
+          description: 'Fast, secure payment with PayPal'
         }
       ];
+      
       dispatch({ type: 'SET_PAYMENT_METHODS', payload: defaultPaymentMethods });
       return defaultPaymentMethods;
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('General error in payment methods flow:', error);
+      setError('An unexpected error occurred');
+      
+      // Return default methods as fallback
+      const defaultPaymentMethods: PaymentMethod[] = [
+        {
+          _id: 'credit_card',
+          name: 'Credit Card',
+          type: 'credit_card',
+          description: 'Pay with Visa, Mastercard, or American Express'
+        },
+        {
+          _id: 'paypal',
+          name: 'PayPal',
+          type: 'paypal',
+          description: 'Fast, secure payment with PayPal'
+        }
+      ];
+      
+      dispatch({ type: 'SET_PAYMENT_METHODS', payload: defaultPaymentMethods });
+      return defaultPaymentMethods;
     }
   };
 

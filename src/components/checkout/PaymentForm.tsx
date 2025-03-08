@@ -66,11 +66,11 @@ const PaymentForm: React.FC = () => {
     };
   }, [fetchPaymentMethods, selectPaymentMethod, state.paymentMethods, state.selectedPaymentMethod]);
 
-  // Add better rendering and forced selection for credit card
+  // Find the useEffect where payment methods are loaded and update it to strongly prioritize credit card
   useEffect(() => {
-    // When payment methods are loaded but no method is selected,
-    // automatically select credit card as default
-    if (state.paymentMethods.length > 0 && !state.selectedPaymentMethod) {
+    // When payment methods are loaded, always prioritize credit card
+    // This needs to run even if a method is already selected
+    if (state.paymentMethods.length > 0) {
       const creditCard = state.paymentMethods.find(m => 
         m.type === 'credit_card' || 
         m._id === 'credit_card' ||
@@ -78,13 +78,16 @@ const PaymentForm: React.FC = () => {
       );
       
       if (creditCard) {
+        // If a credit card payment method exists, always select it 
+        // even if another method was previously selected
         selectPaymentMethod(creditCard);
-      } else {
-        // If no credit card option is found, select the first payment method
+      } else if (!state.selectedPaymentMethod) {
+        // Only if there's no credit card option and no selected method,
+        // fall back to selecting the first payment method
         selectPaymentMethod(state.paymentMethods[0]);
       }
     }
-  }, [state.paymentMethods, state.selectedPaymentMethod, selectPaymentMethod]);
+  }, [state.paymentMethods, selectPaymentMethod]);
 
   // Check if a payment method is selected
   const isPaymentMethodSelected = Boolean(state.selectedPaymentMethod);
