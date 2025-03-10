@@ -86,6 +86,8 @@ const ProductDetails: React.FC = () => {
 
   useEffect(() => {
     const fetchProductDetails = async () => {
+      if (!productId) return;
+      
       setLoading(true);
       try {
         // First, try to fetch by ID/productId directly
@@ -110,58 +112,47 @@ const ProductDetails: React.FC = () => {
           const matchedProduct = allProducts.find((p: any) => 
             p._id === productId ||                // Exact MongoDB ID match
             p.id === productId ||                 // Direct ID match
-            (p._id && productId && p._id.toString().endsWith(productId)) || // ID is suffix of MongoDB ID
+            String(p._id) === String(productId) || // String comparison
+            (p._id && productId && p._id.toString().includes(productId)) || // ID is part of MongoDB ID
             p.slug === productId ||              // Match by slug
-            (productId && !isNaN(parseInt(productId)) && p.id === parseInt(productId)) // Parse numeric ID
+            p.name.toLowerCase().replace(/\s+/g, '-') === productId.toLowerCase() || // Derived slug
+            (productId && !isNaN(parseInt(productId)) && p._id && p._id.toString().endsWith(productId)) // Last digits match
           );
           
           if (matchedProduct) {
             console.log('Found matching product:', matchedProduct);
             setProduct(matchedProduct);
-            setError(null);
             setLoading(false);
             return;
-          } else {
-            throw new Error('Product not found in catalog');
           }
+          
+          throw new Error('Product not found in catalog');
+        } else {
+          // Successfully fetched from direct API endpoint
+          const data = await response.json();
+          console.log('Product details fetched from API:', data);
+          setProduct(data);
         }
-        
-        // If direct fetch worked, use that result
-        const productData = await response.json();
-        console.log('Product details fetched from API:', productData);
-        
-        setProduct(productData);
-        setError(null);
       } catch (err) {
         console.error('Error fetching product details:', err);
         setError('Failed to load product details. Please try again later.');
         
-        // Fall back to sample product data in development
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Falling back to sample product data due to API error');
-          const fallbackProduct = {
-            _id: productId || '1',
-            name: 'Product Not Found',
-            description: 'Sorry, we couldn\'t find the product you\'re looking for. Please try another product or contact customer support.',
-            price: 0,
-            image: 'https://via.placeholder.com/400x300?text=Product+Not+Found',
-            category: 'unknown',
-            inStock: false,
-            featured: false,
-            rating: 0,
-            reviews: 0
-          };
-          
-          setProduct(fallbackProduct);
+        // Check if there's a matching sample product for the given ID
+        const sampleProduct = sampleProducts.find(p => 
+          p._id === productId || 
+          (productId && !isNaN(parseInt(productId)) && p._id === String(parseInt(productId)))
+        );
+        
+        if (sampleProduct) {
+          console.log('Found matching sample product:', sampleProduct);
+          setProduct(sampleProduct);
         }
       } finally {
         setLoading(false);
       }
     };
     
-    if (productId) {
-      fetchProductDetails();
-    }
+    fetchProductDetails();
   }, [productId]);
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
