@@ -92,13 +92,23 @@ const Products: React.FC = () => {
         const data = await response.json();
         console.log('Products fetched from API:', data);
         
+        // Handle the case where data isn't an array
+        const productsArray = Array.isArray(data) ? data : 
+                             (data.products ? data.products : 
+                             (data.items ? data.items : []));
+        
+        if (!Array.isArray(productsArray)) {
+          console.error('API returned data in unexpected format:', data);
+          throw new Error('Products data is not in the expected format');
+        }
+        
         // Log details about featured items
-        const featuredProducts = data.filter((p: any) => 
+        const featuredProducts = productsArray.filter((p: any) => 
           p.isFeatured === true || p.is_featured === true || p.featured === true
         );
         console.log(`Found ${featuredProducts.length} featured products in API response:`, featuredProducts);
         
-        setProducts(data);
+        setProducts(productsArray);
         setError(null);
       } catch (err) {
         console.error('Error fetching products:', err);
