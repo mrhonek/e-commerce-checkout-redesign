@@ -68,11 +68,25 @@ const Products: React.FC = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        // Use the correct Railway API endpoint for products
-        const response = await fetch(`${API_BASE_URL}/products`);
+        let endpoint = `${API_BASE_URL}/products`;
+        
+        // Check if we need to fetch from a special endpoint
+        if (category) {
+          if (category === 'sale') {
+            endpoint = `${API_BASE_URL}/products/sale`;
+          } else if (category === 'deals') {
+            endpoint = `${API_BASE_URL}/products/deals`;
+          } else {
+            // Regular category endpoint
+            endpoint = `${API_BASE_URL}/products/category/${category}`;
+          }
+        }
+        
+        console.log(`Fetching products from endpoint: ${endpoint}`);
+        const response = await fetch(endpoint);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch products');
+          throw new Error(`Failed to fetch products from ${endpoint}`);
         }
         
         const data = await response.json();
@@ -128,7 +142,7 @@ const Products: React.FC = () => {
     };
     
     fetchProducts();
-  }, []);
+  }, [category]); // Add category as a dependency so it refetches when the category changes
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);

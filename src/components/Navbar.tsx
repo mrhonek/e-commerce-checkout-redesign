@@ -66,7 +66,8 @@ export const Navbar: React.FC = () => {
     { name: 'Clothing', path: '/products/category/clothing' },
     { name: 'Home & Kitchen', path: '/products/category/home-kitchen' },
     { name: 'Beauty', path: '/products/category/beauty' },
-    { name: 'Sports', path: '/products/category/sports' },
+    { name: 'Sale', path: '/products/sale' },
+    { name: 'Deals', path: '/products/deals' },
   ];
 
   return (
