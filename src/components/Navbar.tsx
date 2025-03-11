@@ -85,74 +85,67 @@ export const Navbar: React.FC = () => {
             
             {/* Logo */}
             <Link to="/" className="flex items-center">
-              <ShoppingBag className="h-8 w-8 text-blue-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">ShopEase</span>
+              <span className="text-xl font-bold text-blue-600">RhnkShop</span>
             </Link>
           </div>
 
           {/* Desktop Navigation Links - hidden on mobile */}
-          <nav className="hidden md:flex flex-grow max-w-md mx-4 justify-center">
-            <ul className="flex space-x-8">
-              <li>
-                <Link
-                  to="/"
-                  className="text-gray-700 hover:text-blue-600 transition-colors px-4 py-2 rounded-md hover:bg-gray-50"
-                >
-                  Home
-                </Link>
-              </li>
-              <li className="relative group">
-                <Link
-                  to="/products"
-                  className="text-gray-700 hover:text-blue-600 transition-colors flex items-center px-4 py-2 rounded-md hover:bg-gray-50"
-                >
-                  Products
-                  <ChevronDown className="h-4 w-4 ml-1" />
-                </Link>
-                <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  <div className="py-2">
-                    <Link
-                      to="/products/category/home-kitchen"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Home & Kitchen
-                    </Link>
-                    <Link
-                      to="/products/category/beauty"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Beauty
-                    </Link>
-                    <Link
-                      to="/products/category/electronics"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Electronics
-                    </Link>
-                    <Link
-                      to="/products/category/sale"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Sale
-                    </Link>
-                    <Link
-                      to="/products/category/deals"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Deals
-                    </Link>
-                  </div>
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link
+              to="/"
+              className="text-gray-700 hover:text-blue-600 transition-colors px-4 py-2 rounded-md hover:bg-gray-50"
+            >
+              Home
+            </Link>
+            <div className="relative group">
+              <Link
+                to="/products"
+                className="text-gray-700 hover:text-blue-600 transition-colors flex items-center px-4 py-2 rounded-md hover:bg-gray-50"
+              >
+                Products
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Link>
+              <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="py-2">
+                  <Link
+                    to="/products/category/home-kitchen"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Home & Kitchen
+                  </Link>
+                  <Link
+                    to="/products/category/beauty"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Beauty
+                  </Link>
+                  <Link
+                    to="/products/category/electronics"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Electronics
+                  </Link>
+                  <Link
+                    to="/products/category/sale"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Sale
+                  </Link>
+                  <Link
+                    to="/products/category/deals"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Deals
+                  </Link>
                 </div>
-              </li>
-              <li>
-                <Link
-                  to="/cart"
-                  className="text-gray-700 hover:text-blue-600 transition-colors px-4 py-2 rounded-md hover:bg-gray-50"
-                >
-                  Cart
-                </Link>
-              </li>
-            </ul>
+              </div>
+            </div>
+            <Link
+              to="/cart"
+              className="text-gray-700 hover:text-blue-600 transition-colors px-4 py-2 rounded-md hover:bg-gray-50"
+            >
+              Cart
+            </Link>
           </nav>
 
           {/* Icons on the right */}
