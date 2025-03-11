@@ -4,6 +4,7 @@ import { Heart, ShoppingCart, ArrowLeft, Star, CheckCircle, Truck } from 'lucide
 import { useCart } from '../contexts/CartContext';
 import { formatCurrency } from '../utils/formatters';
 import { handleImageError } from '../utils/imageUtils';
+import { Navbar } from '../components/Navbar';
 
 // API base URL with explicit /api/ path
 const API_BASE_URL = 'https://e-commerce-checkout-api-production.up.railway.app/api';
@@ -201,145 +202,148 @@ const ProductDetails: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <nav className="text-sm mb-6">
-        <ol className="list-none p-0 inline-flex">
-          <li className="flex items-center">
-            <Link to="/" className="text-gray-500 hover:text-blue-600">Home</Link>
-            <span className="mx-2 text-gray-400">/</span>
-          </li>
-          <li className="flex items-center">
-            <Link to="/products" className="text-gray-500 hover:text-blue-600">Products</Link>
-            <span className="mx-2 text-gray-400">/</span>
-          </li>
-          <li className="flex items-center">
-            <Link to={`/products/category/${product.category.toLowerCase()}`} className="text-gray-500 hover:text-blue-600">
-              {product.category}
-            </Link>
-            <span className="mx-2 text-gray-400">/</span>
-          </li>
-          <li className="text-gray-700">{product.name}</li>
-        </ol>
-      </nav>
+    <>
+      <Navbar />
+      <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <nav className="text-sm mb-6">
+          <ol className="list-none p-0 inline-flex">
+            <li className="flex items-center">
+              <Link to="/" className="text-gray-500 hover:text-blue-600">Home</Link>
+              <span className="mx-2 text-gray-400">/</span>
+            </li>
+            <li className="flex items-center">
+              <Link to="/products" className="text-gray-500 hover:text-blue-600">Products</Link>
+              <span className="mx-2 text-gray-400">/</span>
+            </li>
+            <li className="flex items-center">
+              <Link to={`/products/category/${product.category.toLowerCase()}`} className="text-gray-500 hover:text-blue-600">
+                {product.category}
+              </Link>
+              <span className="mx-2 text-gray-400">/</span>
+            </li>
+            <li className="text-gray-700">{product.name}</li>
+          </ol>
+        </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Product Image */}
-        <div className="bg-white rounded-lg overflow-hidden">
-          <img 
-            src={product.image} 
-            alt={product.name} 
-            className="w-full h-auto object-cover"
-            onError={(e) => handleImageError(e, 'large')}
-          />
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Product Image */}
+          <div className="bg-white rounded-lg overflow-hidden">
+            <img 
+              src={product.image} 
+              alt={product.name} 
+              className="w-full h-auto object-cover"
+              onError={(e) => handleImageError(e, 'large')}
+            />
+          </div>
 
-        {/* Product Details */}
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-          
-          {/* Rating */}
-          <div className="flex items-center mb-4">
-            <div className="flex items-center">
-              {[...Array(5)].map((_, i) => (
-                <Star 
-                  key={i} 
-                  className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                />
-              ))}
-            </div>
-            <span className="ml-2 text-sm text-gray-600">
-              {product.rating} ({product.reviews} reviews)
-            </span>
-          </div>
-          
-          {/* Price */}
-          <div className="mb-6">
-            <span className="text-2xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
-          </div>
-          
-          {/* Description */}
-          <div className="mb-6">
-            <h2 className="text-lg font-medium mb-2">Description</h2>
-            <p className="text-gray-600">{product.description}</p>
-          </div>
-          
-          {/* Stock Status */}
-          <div className="mb-6 flex items-center">
-            {product.inStock ? (
-              <>
-                <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                <span className="text-green-600 font-medium">In Stock</span>
-              </>
-            ) : (
-              <span className="text-red-600 font-medium">Out of Stock</span>
-            )}
+          {/* Product Details */}
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
             
-            <div className="ml-6 flex items-center">
-              <Truck className="h-5 w-5 text-gray-500 mr-2" />
-              <span className="text-gray-600">Free delivery</span>
+            {/* Rating */}
+            <div className="flex items-center mb-4">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                  />
+                ))}
+              </div>
+              <span className="ml-2 text-sm text-gray-600">
+                {product.rating} ({product.reviews} reviews)
+              </span>
             </div>
-          </div>
-          
-          {/* Quantity Selector */}
-          <div className="mb-6">
-            <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
-              Quantity
-            </label>
-            <select
-              id="quantity"
-              name="quantity"
-              value={quantity}
-              onChange={handleQuantityChange}
-              disabled={!product.inStock}
-              className="mt-1 block w-24 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            >
-              {[...Array(10)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>
-                  {i + 1}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          {/* Add to Cart and Wishlist */}
-          <div className="flex flex-wrap gap-4">
-            <button
-              onClick={handleAddToCart}
-              disabled={!product.inStock || addedToCart}
-              className={`flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white ${
-                !product.inStock 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : addedToCart 
-                  ? 'bg-green-600 hover:bg-green-700' 
-                  : 'bg-blue-600 hover:bg-blue-700'
-              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-            >
-              {addedToCart ? (
+            
+            {/* Price */}
+            <div className="mb-6">
+              <span className="text-2xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
+            </div>
+            
+            {/* Description */}
+            <div className="mb-6">
+              <h2 className="text-lg font-medium mb-2">Description</h2>
+              <p className="text-gray-600">{product.description}</p>
+            </div>
+            
+            {/* Stock Status */}
+            <div className="mb-6 flex items-center">
+              {product.inStock ? (
                 <>
-                  <CheckCircle className="h-5 w-5 mr-2" />
-                  Added to Cart
+                  <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                  <span className="text-green-600 font-medium">In Stock</span>
                 </>
               ) : (
-                <>
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  Add to Cart
-                </>
+                <span className="text-red-600 font-medium">Out of Stock</span>
               )}
-            </button>
+              
+              <div className="ml-6 flex items-center">
+                <Truck className="h-5 w-5 text-gray-500 mr-2" />
+                <span className="text-gray-600">Free delivery</span>
+              </div>
+            </div>
             
-            <button
-              className="flex items-center justify-center px-6 py-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <Heart className="h-5 w-5 mr-2" />
-              Add to Wishlist
-            </button>
+            {/* Quantity Selector */}
+            <div className="mb-6">
+              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
+                Quantity
+              </label>
+              <select
+                id="quantity"
+                name="quantity"
+                value={quantity}
+                onChange={handleQuantityChange}
+                disabled={!product.inStock}
+                className="mt-1 block w-24 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                {[...Array(10)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Add to Cart and Wishlist */}
+            <div className="flex flex-wrap gap-4">
+              <button
+                onClick={handleAddToCart}
+                disabled={!product.inStock || addedToCart}
+                className={`flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white ${
+                  !product.inStock 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : addedToCart 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-blue-600 hover:bg-blue-700'
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+              >
+                {addedToCart ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Added to Cart
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-5 w-5 mr-2" />
+                    Add to Cart
+                  </>
+                )}
+              </button>
+              
+              <button
+                className="flex items-center justify-center px-6 py-3 border border-gray-300 rounded-md shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Heart className="h-5 w-5 mr-2" />
+                Add to Wishlist
+              </button>
+            </div>
+            
+            {/* Additional information could go here */}
           </div>
-          
-          {/* Additional information could go here */}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
