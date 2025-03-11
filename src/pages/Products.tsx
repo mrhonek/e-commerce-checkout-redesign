@@ -72,14 +72,8 @@ const Products: React.FC = () => {
         
         // Check if we need to fetch from a special endpoint
         if (category) {
-          if (category === 'sale') {
-            endpoint = `${API_BASE_URL}/products/sale`;
-          } else if (category === 'deals') {
-            endpoint = `${API_BASE_URL}/products/deals`;
-          } else {
-            // Regular category endpoint
-            endpoint = `${API_BASE_URL}/products/category/${category}`;
-          }
+          // All categories (including sale and deals) should use the category endpoint
+          endpoint = `${API_BASE_URL}/products/category/${category}`;
         }
         
         console.log(`Fetching products from endpoint: ${endpoint}`);
@@ -379,7 +373,7 @@ const Products: React.FC = () => {
           {sortedProducts.map((product) => (
             <div key={product._id || product.id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
               <Link 
-                to={`/products/${product._id || product.id || product.slug || 'product-not-found'}`}
+                to={`/products/${product._id?.toString() || product.id || product.slug || product.name?.toLowerCase().replace(/\s+/g, '-') || 'product-not-found'}`}
                 className="block"
                 onClick={(e) => {
                   // Add debug logging for product link
