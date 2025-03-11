@@ -24,6 +24,9 @@ interface Product {
   rating: number;
   reviews: number;
   slug?: string; // Add optional slug property
+  onSale?: boolean; // For sale items
+  isDeal?: boolean; // For deal items
+  tags?: string[]; // For products with tags
 }
 
 type SortOption = 'featured' | 'price-low' | 'price-high' | 'rating' | 'newest';
@@ -181,9 +184,31 @@ const Products: React.FC = () => {
       return false;
     }
     
-    // Filter by category
-    if (selectedCategory !== 'all' && product.category.toLowerCase() !== selectedCategory) {
-      return false;
+    // Special handling for "sale" and "deals" categories
+    if (selectedCategory === 'sale') {
+      // For sale category, check onSale flag or 'sale' tag
+      const isSaleProduct = 
+        product.onSale === true || 
+        (product.tags && Array.isArray(product.tags) && product.tags.includes('sale'));
+      
+      if (!isSaleProduct) {
+        return false;
+      }
+    } else if (selectedCategory === 'deals') {
+      // For deals category, check isDeal flag or 'deal' tag
+      const isDealProduct = 
+        product.isDeal === true || 
+        (product.tags && Array.isArray(product.tags) && product.tags.includes('deal'));
+      
+      if (!isDealProduct) {
+        return false;
+      }
+    } else if (selectedCategory !== 'all') {
+      // Standard category filtering for other categories
+      const productCategory = product.category?.toLowerCase() || '';
+      if (productCategory !== selectedCategory) {
+        return false;
+      }
     }
     
     // Filter by price range
@@ -198,6 +223,12 @@ const Products: React.FC = () => {
     
     return true;
   });
+
+  // Debug output for filtered products
+  console.log(`After filtering: ${filteredProducts.length} products remain out of ${products.length} total`);
+  if (selectedCategory === 'sale' || selectedCategory === 'deals') {
+    console.log(`Filtered ${selectedCategory} products:`, filteredProducts);
+  }
 
   // Sort filtered products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
